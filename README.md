@@ -1,6 +1,6 @@
-# Database visualizer - dbv
+# dbv - Database visualizer
 
-Database visualizer is a tool to visualize database schema, execute query etc.
+`dbv` is a tool to visualize database schema, execute query etc.
 
 ## Technical thought - only for me
 
