@@ -1,0 +1,69 @@
+use super::{Component, DrawableComponent};
+use crate::events::{key::Keys, EventState};
+
+use ratatui::{prelude::*, widgets::*};
+
+#[derive(Debug, Clone, Copy)]
+pub enum Tab {
+    Test,
+    Options,
+}
+
+impl std::fmt::Display for Tab {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+pub struct TabComponent {
+    pub selected_tab: usize,
+    tabs: Vec<Tab>,
+}
+
+impl TabComponent {
+    pub fn new() -> Self {
+        TabComponent {
+            selected_tab: 0,
+            tabs: vec![Tab::Test, Tab::Options],
+        }
+    }
+}
+
+impl Component for TabComponent {
+    fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
+        match input {
+            Keys::Char('l') | Keys::ArrowRight => {
+                if self.selected_tab == self.tabs.len() - 1 {
+                    self.selected_tab = 0;
+                } else {
+                    self.selected_tab += 1;
+                }
+
+                return Ok(EventState::Consumed);
+            }
+            Keys::Char('h') | Keys::ArrowLeft => {
+                if self.selected_tab == 0 {
+                    self.selected_tab = self.tabs.len() - 1;
+                } else {
+                    self.selected_tab -= 1;
+                }
+
+                return Ok(EventState::Consumed);
+            }
+            _ => return Ok(EventState::Wasted),
+        }
+    }
+}
+
+impl DrawableComponent for TabComponent {
+    fn draw(&self, frame: &mut Frame, area: Rect) -> anyhow::Result<()> {
+        let tabs = Tabs::new(self.tabs.iter().map(|tab| tab.to_string()))
+            .block(Block::default().borders(Borders::ALL))
+            .style(Style::default().fg(Color::Red))
+            .highlight_style(Style::default().fg(Color::Blue))
+            .select(self.selected_tab as usize);
+
+        frame.render_widget(tabs, area);
+        Ok(())
+    }
+}
