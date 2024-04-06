@@ -1,10 +1,15 @@
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub enum Keys {
     ArrowLeft,
     ArrowRight,
     ArrowUp,
     ArrowDown,
+    Enter,
+    Backspace,
+
+    AltChar(char),
+    CtrlChar(char),
     Char(char),
     Unknown,
 }
@@ -12,6 +17,16 @@ pub enum Keys {
 impl From<KeyEvent> for Keys {
     fn from(value: KeyEvent) -> Self {
         match value {
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            } => Keys::CtrlChar(c),
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::ALT,
+                ..
+            } => Keys::AltChar(c),
             KeyEvent {
                 code: KeyCode::Char(c),
                 ..
@@ -25,13 +40,21 @@ impl From<KeyEvent> for Keys {
                 ..
             } => Keys::ArrowRight,
             KeyEvent {
-                code: KeyCode::Up,
-                ..
+                code: KeyCode::Up, ..
             } => Keys::ArrowUp,
             KeyEvent {
                 code: KeyCode::Down,
                 ..
             } => Keys::ArrowDown,
+            KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            } => Keys::Enter,
+            KeyEvent {
+                code: KeyCode::Backspace,
+                ..
+            } => Keys::Backspace,
+
             _ => Keys::Unknown,
         }
     }

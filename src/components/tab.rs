@@ -54,9 +54,10 @@ impl Component for TabComponent {
         }
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect) -> anyhow::Result<()> {
+    fn draw(&self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
+            .border_style(Style::default().fg(self.selected_color(selected)))
             .border_type(BorderType::Rounded);
 
         let tabs = Tabs::new(self.tabs.iter().map(|tab| tab.to_string()))
