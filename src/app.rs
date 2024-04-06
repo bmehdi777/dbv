@@ -124,15 +124,22 @@ impl App {
                 }
             }
             Keys::CtrlChar('l') => {
+                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2  {
+                    self.selected_pane.1 = 2;
+                }  
                 self.selected_pane.0 = if self.selected_pane.0 == 1 { 0 } else { 1 };
-                self.selected_pane.1 = 0;
             }
             Keys::CtrlChar('h') => {
+                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2  {
+                    self.selected_pane.1 = 2;
+                }  
                 self.selected_pane.0 = if self.selected_pane.0 == 0 { 1 } else { 0 };
-                self.selected_pane.1 = 0;
+
             }
             Keys::Char('q') => {
-                self.exit = true;
+                if self.selected_pane.0 != 1 && self.selected_pane.1 != 3 {
+                    self.exit = true;
+                }
             }
             _ => return Ok(EventState::Wasted),
         }
