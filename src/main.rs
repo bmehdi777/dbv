@@ -5,7 +5,7 @@ use crossterm::{
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use std::io::{stdout, Result};
 
-use dbv::app::App;
+use dbv::{app::App, events::events::*};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -16,18 +16,32 @@ async fn main() -> anyhow::Result<()> {
     terminal.clear()?;
 
     let mut app = App::new();
+    let events_handling = EventsHandling::new().start();
 
     loop {
         // draw
-        terminal.draw(|frame| {
-            if let Err(e) = app.draw(frame) {
-                eprintln!("An error occured : {}", e.to_string());
-                std::process::exit(1);
-            };
-        });
+        terminal
+            .draw(|frame| {
+                if let Err(e) = app.draw(frame) {
+                    eprintln!("An error occured : {}", e.to_string());
+                    std::process::exit(1);
+                };
+            })
+            .expect("An error occured while rendering terminal.");
 
         // event
-        app.event_handling();
+        match events_handling.next() {
+            Ok(event) => {
+                if let EventThread::Event(key) = event {
+                    app.event_handling(key).unwrap();
+                }
+            }
+            Err(err) => {
+                eprintln!("An error occured : {}", err.to_string());
+                std::process::exit(1);
+            }
+        };
+
         if app.exit {
             break;
         }

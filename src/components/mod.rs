@@ -8,8 +8,6 @@ pub use tab::TabComponent;
 
 pub trait Component {
     fn event(&mut self, input: &Keys) -> Result<EventState>;
-}
-
-pub trait DrawableComponent {
     fn draw(&self, frame: &mut Frame, area: Rect) -> Result<()>;
 }
+

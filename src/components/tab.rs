@@ -1,12 +1,12 @@
-use super::{Component, DrawableComponent};
+use super::Component;
 use crate::events::{key::Keys, EventState};
 
 use ratatui::{prelude::*, widgets::*};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Tab {
-    Test,
-    Options,
+    Record,
+    Structure,
 }
 
 impl std::fmt::Display for Tab {
@@ -24,7 +24,7 @@ impl TabComponent {
     pub fn new() -> Self {
         TabComponent {
             selected_tab: 0,
-            tabs: vec![Tab::Test, Tab::Options],
+            tabs: vec![Tab::Record, Tab::Structure],
         }
     }
 }
@@ -53,9 +53,7 @@ impl Component for TabComponent {
             _ => return Ok(EventState::Wasted),
         }
     }
-}
 
-impl DrawableComponent for TabComponent {
     fn draw(&self, frame: &mut Frame, area: Rect) -> anyhow::Result<()> {
         let tabs = Tabs::new(self.tabs.iter().map(|tab| tab.to_string()))
             .block(Block::default().borders(Borders::ALL))

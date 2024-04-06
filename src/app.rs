@@ -1,10 +1,10 @@
 use super::{
+    components::Component,
     components::TabComponent,
-    components::{Component, DrawableComponent},
     events::{key::Keys, EventState},
 };
-use crossterm::event::{self, KeyCode, KeyEventKind};
-use ratatui::{layout::Rect, prelude::*, Frame};
+use crossterm::event::{self, KeyEventKind};
+use ratatui::{prelude::*, Frame};
 
 pub struct App {
     tab: TabComponent,
@@ -19,24 +19,22 @@ impl App {
 
     pub fn draw(&self, frame: &mut Frame) -> anyhow::Result<()> {
         let main_area = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Percentage(5), Constraint::Fill(1)])
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Fill(1), Constraint::Fill(3)])
             .split(frame.size());
 
-        self.tab.draw(frame, main_area[0])?;
+        let left_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Fill(1), Constraint::Fill(1), Constraint::Fill(1)])
+            .split(main_area[0]);
+
+        self.tab.draw(frame, left_area[0])?;
         Ok(())
     }
 
-    pub fn event_handling(&mut self) -> anyhow::Result<()> {
-        if event::poll(std::time::Duration::from_millis(16))? {
-            if let event::Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    let k: Keys = key.into();
-                    self.event(&k)?;
-                    self.tab.event(&k)?;
-                }
-            }
-        }
+    pub fn event_handling(&mut self, k: Keys) -> anyhow::Result<()> {
+        self.event(&k)?;
+        self.tab.event(&k)?;
         Ok(())
     }
 
