@@ -79,7 +79,7 @@ impl<'a> App<'a> {
 
         let sub_main_area = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Fill(2), Constraint::Fill(4)])
+            .constraints(vec![Constraint::Fill(2), Constraint::Fill(6)])
             .split(main_area[0]);
 
         let left_area = Layout::default()
