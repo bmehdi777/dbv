@@ -4,5 +4,5 @@
 
 ## Technical thought - only for me
 
-- handle event key from a different thread with mpsc
-- develop in a component way (each component has its render, event handling etc)
+- add logging system (log in a file (e.g. /var/log/dbv/stdout.log ?))
+- add generic popup (help popup, new item popup...)
