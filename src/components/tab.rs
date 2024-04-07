@@ -1,4 +1,4 @@
-use super::Component;
+use super::MutableComponent;
 use crate::events::{key::Keys, EventState};
 
 use ratatui::{prelude::*, widgets::*};
@@ -29,7 +29,7 @@ impl TabComponent {
     }
 }
 
-impl Component for TabComponent {
+impl MutableComponent for TabComponent {
     fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('l') | Keys::ArrowRight => {
@@ -54,7 +54,7 @@ impl Component for TabComponent {
         }
     }
 
-    fn draw(&self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
+    fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(self.selected_color(selected)))

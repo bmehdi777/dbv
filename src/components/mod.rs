@@ -7,6 +7,7 @@ pub mod connection_list;
 pub mod database_list;
 pub mod tab;
 pub mod table_list;
+pub mod records_view;
 
 pub mod command;
 
@@ -15,9 +16,10 @@ pub use database_list::DatabaseListComponent;
 pub use table_list::TableListComponent;
 pub use tab::TabComponent;
 pub use command::CommandComponent;
+pub use records_view::RecordsViewComponent;
 
 pub trait Component {
-    fn event(&mut self, input: &Keys) -> Result<EventState>;
+    fn event(&self, input: &Keys) -> Result<EventState>;
     fn draw(&self, frame: &mut Frame, area: Rect, selected: bool) -> Result<()>;
 
     fn selected_color(&self, selected: bool) -> Color {

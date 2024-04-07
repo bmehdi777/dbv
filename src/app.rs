@@ -5,31 +5,33 @@ use super::{
 };
 use ratatui::{prelude::*, Frame};
 
-pub struct App {
+pub struct App<'a> {
     tab: TabComponent,
     connection_list: ConnectionListComponent,
-    database_list: DatabaseListComponent,
-    table_list: TableListComponent,
+    database_list: DatabaseListComponent, table_list: TableListComponent,
     command: CommandComponent,
+    records_view: RecordsViewComponent<'a>,
 
     selected_pane: (u8, u8), // x,y
     max_pane_column: [u8; 2],
     pub exit: bool,
 }
 
-impl App {
+impl<'a> App<'a> {
     pub fn new() -> Self {
         let tab = TabComponent::new();
         let connection_list = ConnectionListComponent::new();
         let database_list = DatabaseListComponent::new();
         let table_list = TableListComponent::new();
         let command = CommandComponent::new();
+        let records_view = RecordsViewComponent::new();
 
         App {
             tab,
             connection_list,
             database_list,
             table_list,
+            records_view,
 
             command,
 
@@ -44,6 +46,7 @@ impl App {
         let select_table_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 2;
 
         let select_tab = self.selected_pane.0 == 1 && self.selected_pane.1 == 0;
+        let select_records_view = self.selected_pane.0 == 1 && self.selected_pane.1 == 1;
         let select_command = self.selected_pane.0 == 1 && self.selected_pane.1 == 3;
 
         let main_area = Layout::default()
@@ -77,6 +80,8 @@ impl App {
             .draw(frame, left_area[2], select_table_list)?;
 
         self.tab.draw(frame, right_area[0], select_tab)?;
+        self.records_view
+            .draw(frame, right_area[1], select_records_view)?;
         self.command.draw(frame, right_area[3], select_command)?;
 
         Ok(())
@@ -97,7 +102,7 @@ impl App {
             (1, 0) => {
                 self.tab.event(&k)?;
             }
-            (1,3) => {
+            (1, 3) => {
                 self.command.event(&k)?;
             }
             (_, _) => {}
@@ -124,22 +129,22 @@ impl App {
                 }
             }
             Keys::CtrlChar('l') => {
-                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2  {
+                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2 {
                     self.selected_pane.1 = 2;
-                }  
+                }
                 self.selected_pane.0 = if self.selected_pane.0 == 1 { 0 } else { 1 };
             }
             Keys::CtrlChar('h') => {
-                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2  {
+                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2 {
                     self.selected_pane.1 = 2;
-                }  
+                }
                 self.selected_pane.0 = if self.selected_pane.0 == 0 { 1 } else { 0 };
-
             }
             Keys::Char('q') => {
-                if self.selected_pane.0 != 1 && self.selected_pane.1 != 3 {
-                    self.exit = true;
+                if self.selected_pane.0 == 1 && self.selected_pane.1 == 3 {
+                    return Ok(EventState::Wasted);
                 }
+                self.exit = true;
             }
             _ => return Ok(EventState::Wasted),
         }
