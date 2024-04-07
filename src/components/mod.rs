@@ -13,6 +13,7 @@ pub mod records_view;
 pub mod result_view;
 pub mod tab;
 pub mod table_list;
+pub mod help_text;
 
 pub mod command;
 
@@ -23,6 +24,7 @@ pub use records_view::RecordsViewComponent;
 pub use result_view::ResultViewComponent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
+pub use help_text::HelpTextComponent;
 
 fn selected_color(selected: bool, theme_config: ThemeConfig) -> Color {
     if selected {

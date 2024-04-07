@@ -1,6 +1,6 @@
 use super::{
     components::*,
-    config::{Config, ThemeConfig},
+    config::Config,
     events::{key::Keys, EventState},
 };
 use ratatui::{prelude::*, Frame};
@@ -25,6 +25,7 @@ pub struct App<'a> {
     command: CommandComponent,
     records_view: RecordsViewComponent<'a>,
     result_view: ResultViewComponent,
+    help_text: HelpTextComponent,
 
     selected_pane: (u8, u8), // x,y
     max_pane_column: [u8; 2],
@@ -41,6 +42,7 @@ impl<'a> App<'a> {
         let command = CommandComponent::new();
         let records_view = RecordsViewComponent::new();
         let result_view = ResultViewComponent::new();
+        let help_text = HelpTextComponent::new();
 
         let app_state = AppState::new();
         App {
@@ -52,6 +54,8 @@ impl<'a> App<'a> {
             records_view,
             result_view,
             command,
+
+            help_text,
 
             selected_pane: (0, 0),
             max_pane_column: [3, 2],
@@ -112,6 +116,8 @@ impl<'a> App<'a> {
         self.command
             .draw(frame, right_area[3], select_command, &self.app_state)?;
 
+        self.help_text
+            .draw(frame, main_area[1], false, &self.app_state);
         Ok(())
     }
 

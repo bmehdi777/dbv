@@ -19,9 +19,7 @@ impl Config {
         }
     }
     pub fn load(&self) -> Self {
-        let file_content = if let Ok(content) =
-            fs::read_to_string(Config::get_path_config())
-        {
+        let file_content = if let Ok(content) = fs::read_to_string(Config::get_path_config()) {
             content
         } else {
             return *self;
@@ -65,15 +63,19 @@ pub struct ThemeConfig {
     pub selected_color: RGB,
     #[serde(rename = "unselectedColor")]
     pub unselected_color: RGB,
+    #[serde(rename = "helpTextColor")]
+    pub help_text_color: RGB,
 }
 
 impl ThemeConfig {
     pub fn default() -> Self {
         let selected_color = [255, 165, 0];
         let unselected_color = [255, 236, 195];
+        let help_text_color = [93, 169, 233];
         ThemeConfig {
             selected_color,
             unselected_color,
+            help_text_color,
         }
     }
 }
