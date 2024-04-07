@@ -12,11 +12,12 @@ async fn main() -> anyhow::Result<()> {
     setup_terminal()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
-
     terminal.clear()?;
 
     let mut app = App::new();
     let events_handling = EventsHandling::new().start();
+
+    app.app_state.config.init().expect("An error occured while initializing the config file.");
 
     loop {
         // draw

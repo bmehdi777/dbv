@@ -1,7 +1,11 @@
 use anyhow::Result;
 use ratatui::{layout::Rect, prelude::*, Frame};
 
-use crate::events::{key::Keys, EventState};
+use crate::{
+    app::AppState,
+    config::ThemeConfig,
+    events::{key::Keys, EventState},
+};
 
 pub mod connection_list;
 pub mod database_list;
@@ -20,29 +24,49 @@ pub use result_view::ResultViewComponent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
 
-fn selected_color(selected: bool) -> Color {
+fn selected_color(selected: bool, theme_config: ThemeConfig) -> Color {
     if selected {
-        Color::Rgb(255, 165, 0)
+        Color::Rgb(
+            theme_config.selected_color[0],
+            theme_config.selected_color[1],
+            theme_config.selected_color[2],
+        )
     } else {
-        Color::Rgb(255, 236, 195)
+        Color::Rgb(
+            theme_config.unselected_color[0],
+            theme_config.unselected_color[1],
+            theme_config.unselected_color[2],
+        )
     }
 }
 
 pub trait Component {
-    fn event(&self, input: &Keys) -> Result<EventState>;
-    fn draw(&self, frame: &mut Frame, area: Rect, selected: bool) -> Result<()>;
+    fn event(&self, input: &Keys, app_state: &AppState) -> Result<EventState>;
+    fn draw(
+        &self,
+        frame: &mut Frame,
+        area: Rect,
+        selected: bool,
+        app_state: &AppState,
+    ) -> Result<()>;
 
-    fn selected_color(&self, selected: bool) -> Color {
-        selected_color(selected)
+    fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {
+        selected_color(selected, theme_config)
     }
 }
 
 pub trait MutableComponent {
-    fn event(&mut self, input: &Keys) -> Result<EventState>;
-    fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> Result<()>;
+    fn event(&mut self, input: &Keys, app_state: &AppState) -> Result<EventState>;
+    fn draw(
+        &mut self,
+        frame: &mut Frame,
+        area: Rect,
+        selected: bool,
+        app_state: &AppState,
+    ) -> Result<()>;
 
-    fn selected_color(&self, selected: bool) -> Color {
-        selected_color(selected)
+    fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {
+        selected_color(selected, theme_config)
     }
 }
 

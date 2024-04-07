@@ -1,5 +1,8 @@
-use super::{MutableComponent, centered_rect};
-use crate::events::{key::Keys, EventState};
+use super::{centered_rect, MutableComponent};
+use crate::{
+    app::AppState,
+    events::{key::Keys, EventState},
+};
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -27,14 +30,22 @@ impl<'a> RecordsViewComponent<'a> {
 }
 
 impl<'a> MutableComponent for RecordsViewComponent<'a> {
-    fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
+    fn event(&mut self, _input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
         Ok(EventState::Wasted)
     }
 
-    fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
+    fn draw(
+        &mut self,
+        frame: &mut Frame,
+        area: Rect,
+        selected: bool,
+        app_state: &AppState,
+    ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(self.selected_color(selected)))
+            .border_style(
+                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+            )
             .border_type(BorderType::Rounded);
 
         let width = vec![Constraint::Fill(1); self.rows.len()];
@@ -47,8 +58,7 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
 
             frame.render_stateful_widget(table, area, &mut self.table_state);
         } else {
-            let no_data = Paragraph::new("No records")
-                .style(Style::new().italic());
+            let no_data = Paragraph::new("No records").style(Style::new().italic());
 
             frame.render_widget(container, area);
             frame.render_widget(no_data, centered_rect(area, 11, 1));

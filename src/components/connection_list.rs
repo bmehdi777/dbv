@@ -1,5 +1,8 @@
 use super::{centered_rect, MutableComponent};
-use crate::events::{key::Keys, EventState};
+use crate::{
+    app::AppState,
+    events::{key::Keys, EventState},
+};
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -30,7 +33,7 @@ impl ConnectionListComponent {
 }
 
 impl MutableComponent for ConnectionListComponent {
-    fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.list_state.selected() {
@@ -68,11 +71,12 @@ impl MutableComponent for ConnectionListComponent {
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
         selected: bool,
+        app_state: &AppState
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Connections")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(self.selected_color(selected)))
+            .border_style(Style::default().fg(self.selected_color(selected, app_state.config.theme_config)))
             .border_type(BorderType::Rounded);
 
         if self.connection_items.len() > 0 {

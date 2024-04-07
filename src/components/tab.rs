@@ -1,5 +1,8 @@
 use super::MutableComponent;
-use crate::events::{key::Keys, EventState};
+use crate::{
+    app::AppState,
+    events::{key::Keys, EventState},
+};
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -7,7 +10,7 @@ use ratatui::{prelude::*, widgets::*};
 pub enum Tab {
     Record,
     Structure,
-    History
+    History,
 }
 
 impl std::fmt::Display for Tab {
@@ -31,7 +34,7 @@ impl TabComponent {
 }
 
 impl MutableComponent for TabComponent {
-    fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('l') | Keys::ArrowRight => {
                 if self.selected_tab == self.tabs.len() - 1 {
@@ -55,10 +58,18 @@ impl MutableComponent for TabComponent {
         }
     }
 
-    fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
+    fn draw(
+        &mut self,
+        frame: &mut Frame,
+        area: Rect,
+        selected: bool,
+        app_state: &AppState,
+    ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(self.selected_color(selected)))
+            .border_style(
+                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+            )
             .border_type(BorderType::Rounded);
 
         let tabs = Tabs::new(self.tabs.iter().map(|tab| tab.to_string()))
