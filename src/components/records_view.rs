@@ -1,4 +1,4 @@
-use super::MutableComponent;
+use super::{MutableComponent, centered_rect};
 use crate::events::{key::Keys, EventState};
 
 use ratatui::{prelude::*, widgets::*};
@@ -16,11 +16,7 @@ impl<'a> RecordsViewComponent<'a> {
             Cell::from("Hello").style(Style::default().fg(Color::White).bg(Color::Blue)),
             Cell::from("World").style(Style::default().fg(Color::White).bg(Color::Blue)),
         ]);
-        let rows: Vec<Row<'a>> = vec![
-            Row::new(vec!["teeeeeeeeeeeeeeeeeest", "test"]),
-            Row::new(vec!["teeeeeeeeeeeeeeeeeest", "test"]),
-            Row::new(vec!["teeeeeeeeeeeeeeeeeest", "test"]),
-        ];
+        let rows: Vec<Row<'a>> = vec![];
         let table_state = TableState::default();
         RecordsViewComponent {
             header,
@@ -32,7 +28,7 @@ impl<'a> RecordsViewComponent<'a> {
 
 impl<'a> MutableComponent for RecordsViewComponent<'a> {
     fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
-        todo!()
+        Ok(EventState::Wasted)
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
@@ -43,12 +39,20 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
 
         let width = vec![Constraint::Fill(1); self.rows.len()];
 
-        let table = Table::new(self.rows.clone(), width)
-            .block(container)
-            .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
-            .header(self.header.clone());
+        if self.rows.len() > 0 {
+            let table = Table::new(self.rows.clone(), width)
+                .block(container)
+                .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
+                .header(self.header.clone());
 
-        frame.render_stateful_widget(table, area, &mut self.table_state);
+            frame.render_stateful_widget(table, area, &mut self.table_state);
+        } else {
+            let no_data = Paragraph::new("No records")
+                .style(Style::new().italic());
+
+            frame.render_widget(container, area);
+            frame.render_widget(no_data, centered_rect(area, 11, 1));
+        }
         Ok(())
     }
 }

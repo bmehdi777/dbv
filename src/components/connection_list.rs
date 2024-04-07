@@ -1,4 +1,4 @@
-use super::MutableComponent;
+use super::{centered_rect, MutableComponent};
 use crate::events::{key::Keys, EventState};
 
 use ratatui::{prelude::*, widgets::*};
@@ -17,20 +17,7 @@ pub struct ConnectionListComponent {
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
-        let connection_items = vec![
-            ConnectionItem {
-                name: String::from("Home"),
-                connection_string: String::from("mariadb://"),
-            },
-            ConnectionItem {
-                name: String::from("Home1"),
-                connection_string: String::from("mariadb://"),
-            },
-            ConnectionItem {
-                name: String::from("Home2"),
-                connection_string: String::from("mariadb://"),
-            },
-        ];
+        let connection_items = vec![];
         let mut list_state = ListState::default();
         if connection_items.len() > 0 {
             list_state.select(Some(0));
@@ -80,22 +67,28 @@ impl MutableComponent for ConnectionListComponent {
         &mut self,
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
-        selected: bool
+        selected: bool,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Connections")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(
-               self.selected_color(selected)
-            ))
+            .border_style(Style::default().fg(self.selected_color(selected)))
             .border_type(BorderType::Rounded);
 
-        let list = List::new(self.connection_items.iter().map(|item| item.name.clone()))
-            .block(container)
-            .highlight_symbol(">>")
-            .repeat_highlight_symbol(true);
+        if self.connection_items.len() > 0 {
+            let list = List::new(self.connection_items.iter().map(|item| item.name.clone()))
+                .block(container)
+                .highlight_symbol(">>")
+                .repeat_highlight_symbol(true);
 
-        frame.render_stateful_widget(list, area, &mut self.list_state);
+            frame.render_stateful_widget(list, area, &mut self.list_state);
+        } else {
+            let no_data = Paragraph::new("No connections registered").style(Style::new().italic()).centered();
+
+            frame.render_widget(container, area);
+            frame.render_widget(no_data, centered_rect(area, 50, 20))
+        }
+
         Ok(())
     }
 }

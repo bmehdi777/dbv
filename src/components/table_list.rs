@@ -1,4 +1,4 @@
-use super::MutableComponent;
+use super::{centered_rect, MutableComponent};
 use crate::events::{key::Keys, EventState};
 
 use ratatui::{prelude::*, widgets::*};
@@ -16,17 +16,7 @@ pub struct TableListComponent {
 
 impl TableListComponent {
     pub fn new() -> Self {
-        let table_items = vec![
-            TableItem {
-                name: String::from("Home"),
-            },
-            TableItem {
-                name: String::from("Home1"),
-            },
-            TableItem {
-                name: String::from("Home2"),
-            },
-        ];
+        let table_items = vec![];
         let mut list_state = ListState::default();
         if table_items.len() > 0 {
             list_state.select(Some(0));
@@ -83,13 +73,22 @@ impl MutableComponent for TableListComponent {
             .border_style(Style::default().fg(self.selected_color(selected)))
             .border_type(BorderType::Rounded);
 
-        let list = List::new(self.table_items.iter().map(|item| item.name.clone()))
-            .block(container)
-            .highlight_style(Style::default().fg(Color::LightGreen))
-            .highlight_symbol(">>")
-            .repeat_highlight_symbol(true);
+        if self.table_items.len() > 0 {
+            let list = List::new(self.table_items.iter().map(|item| item.name.clone()))
+                .block(container)
+                .highlight_style(Style::default().fg(Color::LightGreen))
+                .highlight_symbol(">>")
+                .repeat_highlight_symbol(true);
 
-        frame.render_stateful_widget(list, area, &mut self.list_state);
+            frame.render_stateful_widget(list, area, &mut self.list_state);
+        } else {
+            let no_data = Paragraph::new("No tables")
+                .style(Style::new().italic())
+                .centered();
+
+            frame.render_widget(container, area);
+            frame.render_widget(no_data, centered_rect(area, 50, 20));
+        }
         Ok(())
     }
 }

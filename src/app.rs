@@ -36,7 +36,7 @@ impl<'a> App<'a> {
             command,
 
             selected_pane: (0, 0),
-            max_pane_column: [3, 4],
+            max_pane_column: [3, 2],
             exit: false,
         }
     }
@@ -129,14 +129,14 @@ impl<'a> App<'a> {
                 }
             }
             Keys::CtrlChar('l') => {
-                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2 {
-                    self.selected_pane.1 = 2;
-                }
+                if self.selected_pane.1 >= 2 {
+                    self.selected_pane.1 = 1;
+                } 
                 self.selected_pane.0 = if self.selected_pane.0 == 1 { 0 } else { 1 };
             }
             Keys::CtrlChar('h') => {
-                if self.selected_pane.0 == 1 && self.selected_pane.1 >= 2 {
-                    self.selected_pane.1 = 2;
+                if  self.selected_pane.1 >= 2 {
+                    self.selected_pane.1 = 1;
                 }
                 self.selected_pane.0 = if self.selected_pane.0 == 0 { 1 } else { 0 };
             }
