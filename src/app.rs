@@ -54,9 +54,15 @@ impl<'a> App<'a> {
         let select_command = self.selected_pane.0 == 1 && self.selected_pane.1 == 3;
 
         let main_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Fill(1), Constraint::Length(1)])
+            .split(frame.size());
+
+
+        let sub_main_area = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Fill(2), Constraint::Fill(4)])
-            .split(frame.size());
+            .split(main_area[0]);
 
         let left_area = Layout::default()
             .direction(Direction::Vertical)
@@ -65,7 +71,7 @@ impl<'a> App<'a> {
                 Constraint::Fill(if select_database_list { 5 } else { 1 }),
                 Constraint::Fill(if select_table_list { 5 } else { 1 }),
             ])
-            .split(main_area[0]);
+            .split(sub_main_area[0]);
         let right_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -74,7 +80,7 @@ impl<'a> App<'a> {
                 Constraint::Fill(1),
                 Constraint::Length(3),
             ])
-            .split(main_area[1]);
+            .split(sub_main_area[1]);
 
         self.connection_list
             .draw(frame, left_area[0], select_connection_list)?;
