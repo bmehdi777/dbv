@@ -17,6 +17,13 @@ impl MutableComponent for ResultViewComponent {
     }
 
     fn draw(&mut self, frame: &mut Frame, area: Rect, selected: bool) -> anyhow::Result<()> {
-        todo!()
+        let container = Block::default()
+            .title("Log")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(self.selected_color(selected)))
+            .border_type(BorderType::Rounded);
+
+        frame.render_widget(container, area);
+        Ok(())
     }
 }

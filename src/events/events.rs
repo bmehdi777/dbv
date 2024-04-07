@@ -1,5 +1,5 @@
 use crate::events::key::Keys;
-use crossterm::event::{self};
+use crossterm::event::{self, Event};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 
@@ -25,15 +25,18 @@ impl EventsHandling {
             if event::poll(std::time::Duration::from_millis(16))
                 .expect("An error occured while polling event.")
             {
-                if let event::Event::Key(key) =
-                    event::read().expect("An error occured while reading event.")
-                {
-                    let k: Keys = key.into();
-                    etx.send(EventThread::Event(k))
-                        .expect("An error occured while sending event.");
-                } else {
-                    etx.send(EventThread::Tick)
-                        .expect("An error occured while sending tick.");
+                match event::read().expect("An error occured while reading event.") {
+                    Event::Key(key) => {
+                        let k: Keys = key.into();
+                        etx.send(EventThread::Event(k))
+                            .expect("An error occured while sending event.");
+                    }
+                    Event::Mouse(_) => {
+                        // todo one day ?
+                    }
+                    _ => {
+                        etx.send(EventThread::Tick).expect("An error occured while sending tick.");
+                    }
                 }
             }
         });

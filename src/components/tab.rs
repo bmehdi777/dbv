@@ -7,6 +7,7 @@ use ratatui::{prelude::*, widgets::*};
 pub enum Tab {
     Record,
     Structure,
+    History
 }
 
 impl std::fmt::Display for Tab {
@@ -24,7 +25,7 @@ impl TabComponent {
     pub fn new() -> Self {
         TabComponent {
             selected_tab: 0,
-            tabs: vec![Tab::Record, Tab::Structure],
+            tabs: vec![Tab::Record, Tab::Structure, Tab::History],
         }
     }
 }
