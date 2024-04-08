@@ -33,33 +33,36 @@ impl TableListComponent {
 
 impl MutableComponent for TableListComponent {
     fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
-        match input {
-            Keys::Char('j') => {
-                if let Some(i) = self.list_state.selected() {
-                    let index = if i == self.table_items.len() - 1 {
-                        0
-                    } else {
-                        i + 1
-                    };
+        log::info!("New input in TableListComponent");
+        if self.table_items.len() > 0 {
+            match input {
+                Keys::Char('j') => {
+                    if let Some(i) = self.list_state.selected() {
+                        let index = if i == self.table_items.len() - 1 {
+                            0
+                        } else {
+                            i + 1
+                        };
 
-                    self.list_state.select(Some(index));
-                } else {
-                    self.list_state.select(Some(0));
-                }
-            }
-            Keys::Char('k') => {
-                if let Some(i) = self.list_state.selected() {
-                    let index = if i == 0 {
-                        self.table_items.len() - 1
+                        self.list_state.select(Some(index));
                     } else {
-                        i - 1
-                    };
-                    self.list_state.select(Some(index));
-                } else {
-                    self.list_state.select(Some(self.table_items.len() - 1));
+                        self.list_state.select(Some(0));
+                    }
                 }
+                Keys::Char('k') => {
+                    if let Some(i) = self.list_state.selected() {
+                        let index = if i == 0 {
+                            self.table_items.len() - 1
+                        } else {
+                            i - 1
+                        };
+                        self.list_state.select(Some(index));
+                    } else {
+                        self.list_state.select(Some(self.table_items.len() - 1));
+                    }
+                }
+                _ => return Ok(EventState::Wasted),
             }
-            _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
     }

@@ -5,7 +5,7 @@ use crossterm::{
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use std::io::{stdout, Result};
 
-use dbv::{app::App, events::events::*};
+use dbv::{app::App, events::events::*, log::set_logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,7 +17,12 @@ async fn main() -> anyhow::Result<()> {
     let mut app = App::new();
     let events_handling = EventsHandling::new().start();
 
-    app.app_state.config.init().expect("An error occured while initializing the config file.");
+    app.app_state
+        .config
+        .init()
+        .expect("An error occured while initializing the config file.");
+
+    set_logger(&app.app_state.config)?;
 
     loop {
         // draw

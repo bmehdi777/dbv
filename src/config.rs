@@ -1,3 +1,4 @@
+use super::log::LogLevel;
 use serde::{Deserialize, Serialize};
 use std::{env, fs, path};
 
@@ -10,12 +11,16 @@ type RGB = [u8; 3];
 pub struct Config {
     #[serde(rename = "theme")]
     pub theme_config: ThemeConfig,
+
+    #[serde(rename = "logLevel")]
+    pub log_level: LogLevel,
 }
 
 impl Config {
     pub fn default() -> Self {
         Config {
             theme_config: ThemeConfig::default(),
+            log_level: LogLevel::default(),
         }
     }
     pub fn load(&self) -> Self {

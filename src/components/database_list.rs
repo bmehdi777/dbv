@@ -1,5 +1,8 @@
 use super::{centered_rect, MutableComponent};
-use crate::{app::AppState,events::{key::Keys, EventState}};
+use crate::{
+    app::AppState,
+    events::{key::Keys, EventState},
+};
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -16,8 +19,7 @@ pub struct DatabaseListComponent {
 
 impl DatabaseListComponent {
     pub fn new() -> Self {
-        let database_items = vec![
-        ];
+        let database_items = vec![];
         let mut list_state = ListState::default();
         if database_items.len() > 0 {
             list_state.select(Some(0));
@@ -31,33 +33,35 @@ impl DatabaseListComponent {
 
 impl MutableComponent for DatabaseListComponent {
     fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
-        match input {
-            Keys::Char('j') => {
-                if let Some(i) = self.list_state.selected() {
-                    let index = if i == self.database_items.len() - 1 {
-                        0
-                    } else {
-                        i + 1
-                    };
+        if self.database_items.len() > 0 {
+            match input {
+                Keys::Char('j') => {
+                    if let Some(i) = self.list_state.selected() {
+                        let index = if i == self.database_items.len() - 1 {
+                            0
+                        } else {
+                            i + 1
+                        };
 
-                    self.list_state.select(Some(index));
-                } else {
-                    self.list_state.select(Some(0));
-                }
-            }
-            Keys::Char('k') => {
-                if let Some(i) = self.list_state.selected() {
-                    let index = if i == 0 {
-                        self.database_items.len() - 1
+                        self.list_state.select(Some(index));
                     } else {
-                        i - 1
-                    };
-                    self.list_state.select(Some(index));
-                } else {
-                    self.list_state.select(Some(self.database_items.len() - 1));
+                        self.list_state.select(Some(0));
+                    }
                 }
+                Keys::Char('k') => {
+                    if let Some(i) = self.list_state.selected() {
+                        let index = if i == 0 {
+                            self.database_items.len() - 1
+                        } else {
+                            i - 1
+                        };
+                        self.list_state.select(Some(index));
+                    } else {
+                        self.list_state.select(Some(self.database_items.len() - 1));
+                    }
+                }
+                _ => return Ok(EventState::Wasted),
             }
-            _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
     }
@@ -67,12 +71,14 @@ impl MutableComponent for DatabaseListComponent {
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
         selected: bool,
-        app_state: &AppState
+        app_state: &AppState,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Databases")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(self.selected_color(selected, app_state.config.theme_config)))
+            .border_style(
+                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+            )
             .border_type(BorderType::Rounded);
 
         if self.database_items.len() > 0 {
