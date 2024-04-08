@@ -4,5 +4,4 @@
 
 ## Technical thought - only for me
 
-- add logging system (log in a file (e.g. /var/log/dbv/stdout.log ?))
 - add generic popup (help popup, new item popup...)
