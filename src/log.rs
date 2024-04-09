@@ -12,11 +12,7 @@ use std::env;
 pub fn set_logger(config: &Configuration) -> Result<()> {
     let home_path = env::var("HOME").expect("An error occured while reading $HOME.");
 
-    let pattern = if let LogLevel::DEBUG = config.log_level {
-        "[{d(%Y-%m-%d %H:%M:%S)} {l} {f}:{L}] {m}{n}"
-    } else {
-        "[{d(%Y-%m-%d %H:%M:%S)} {l}] {m}{n}"
-    };
+    let pattern = "[{d(%Y-%m-%d %H:%M:%S)} {l}] {m}{n}";
 
     let log_file = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(pattern)))
@@ -35,7 +31,7 @@ pub fn set_logger(config: &Configuration) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LogLevel {
     OFF,
     TRACE,

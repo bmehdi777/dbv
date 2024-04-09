@@ -3,7 +3,7 @@ use super::{
     config::Config,
     events::{key::Keys, EventState},
 };
-use ratatui::{prelude::*, Frame};
+use ratatui::{prelude::*, widgets::*, Frame};
 
 pub struct AppState {
     pub config: Config,
@@ -64,6 +64,12 @@ impl<'a> App<'a> {
         }
     }
     pub fn draw(&mut self, frame: &mut Frame) -> anyhow::Result<()> {
+        if let Some(paragraph) = self.verify_space_available(frame) {
+            frame.render_widget(paragraph, frame.size());
+            return Ok(())
+        }
+
+        
         let select_connection_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 0;
         let select_database_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 1;
         let select_table_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 2;
@@ -117,7 +123,7 @@ impl<'a> App<'a> {
             .draw(frame, right_area[3], select_command, &self.app_state)?;
 
         self.help_text
-            .draw(frame, main_area[1], false, &self.app_state);
+            .draw(frame, main_area[1], false, &self.app_state)?;
         Ok(())
     }
 
@@ -183,5 +189,25 @@ impl<'a> App<'a> {
             _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
+    }
+
+    fn verify_space_available(&mut self, frame: &mut Frame) -> Option<Paragraph> {
+        let size = frame.size();
+        if size.width <= 50 || size.height <= 21 {
+            let color = Color::Rgb(
+                self.app_state.config.theme_config.unselected_color[0],
+                self.app_state.config.theme_config.unselected_color[1],
+                self.app_state.config.theme_config.unselected_color[2],
+            );
+            let not_enough_space = Paragraph::default().block(
+                Block::default()
+                    .title("Not enough space to render")
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(color)),
+            );
+
+            return Some(not_enough_space);
+        }
+        None
     }
 }
