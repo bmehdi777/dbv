@@ -3,6 +3,7 @@ use super::{
     config::Config,
     events::{key::Keys, EventState},
 };
+use std::collections::HashMap;
 use ratatui::{prelude::*, widgets::*, Frame};
 
 pub struct AppState {
@@ -223,15 +224,10 @@ impl<'a> App<'a> {
         Ok(EventState::Consumed)
     }
 
-    fn set_help_view_text(&mut self,selected_pane: (u8, u8)) {
+    fn help_view_text(selected_pane: (u8,u8)) -> HashMap<String, String> {
         match selected_pane {
-            (0,0) => {
-                self.help_view = HelpViewComponent::new(Some(std::collections::HashMap::from([(
-                    "hello".into(),
-                    "world".into(),
-                )])));
-            }
-            _=>{}
+            (0,0) => HashMap::from()
+            _ => HashMap::new()
         }
     }
 
