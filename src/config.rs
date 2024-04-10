@@ -70,6 +70,11 @@ pub struct ThemeConfig {
     pub unselected_color: RGB,
     #[serde(rename = "helpTextColor")]
     pub help_text_color: RGB,
+
+    #[serde(rename = "helpKeyColor")]
+    pub help_key_color: RGB,
+    #[serde(rename = "helpDescColor")]
+    pub help_desc_color: RGB
 }
 
 impl ThemeConfig {
@@ -77,10 +82,14 @@ impl ThemeConfig {
         let selected_color = [255, 165, 0];
         let unselected_color = [255, 236, 195];
         let help_text_color = [93, 169, 233];
+        let help_key_color = [100,149,237];
+        let help_desc_color = [255, 236, 195];
         ThemeConfig {
             selected_color,
             unselected_color,
             help_text_color,
+            help_key_color,
+            help_desc_color,
         }
     }
 }

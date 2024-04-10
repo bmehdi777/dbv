@@ -9,24 +9,26 @@ use crate::{
 
 pub mod connection_list;
 pub mod database_list;
+pub mod help_text;
+pub mod help_view;
 pub mod records_view;
 pub mod result_view;
 pub mod tab;
 pub mod table_list;
-pub mod help_text;
-pub mod help_view;
 
 pub mod command;
 
 pub use command::CommandComponent;
 pub use connection_list::ConnectionListComponent;
 pub use database_list::DatabaseListComponent;
+pub use help_text::HelpTextComponent;
+pub use help_view::HelpViewComponent;
 pub use records_view::RecordsViewComponent;
 pub use result_view::ResultViewComponent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
-pub use help_text::HelpTextComponent;
-pub use help_view::HelpViewComponent;
+
+pub use help_view::HelpContentText;
 
 fn selected_color(selected: bool, theme_config: ThemeConfig) -> Color {
     if selected {
@@ -43,6 +45,9 @@ fn selected_color(selected: bool, theme_config: ThemeConfig) -> Color {
         )
     }
 }
+fn get_color(rgb: [u8; 3]) -> Color {
+    Color::Rgb(rgb[0], rgb[1], rgb[2])
+}
 
 pub trait Component {
     fn event(&self, input: &Keys, app_state: &AppState) -> Result<EventState>;
@@ -56,6 +61,9 @@ pub trait Component {
 
     fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {
         selected_color(selected, theme_config)
+    }
+    fn get_color(&self, rgb: [u8; 3]) -> Color {
+        get_color(rgb)
     }
 }
 
@@ -71,6 +79,9 @@ pub trait MutableComponent {
 
     fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {
         selected_color(selected, theme_config)
+    }
+    fn get_color(&self, rgb: [u8; 3]) -> Color {
+        get_color(rgb)
     }
 }
 

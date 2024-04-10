@@ -7,6 +7,7 @@ pub enum Keys {
     ArrowDown,
     Enter,
     Backspace,
+    Esc,
 
     AltChar(char),
     CtrlChar(char),
@@ -54,6 +55,10 @@ impl From<KeyEvent> for Keys {
                 code: KeyCode::Backspace,
                 ..
             } => Keys::Backspace,
+            KeyEvent {
+                code: KeyCode::Esc,
+                ..
+            } => Keys::Esc,
 
             _ => Keys::Unknown,
         }

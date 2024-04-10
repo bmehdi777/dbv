@@ -3,8 +3,8 @@ use super::{
     config::Config,
     events::{key::Keys, EventState},
 };
-use std::collections::HashMap;
 use ratatui::{prelude::*, widgets::*, Frame};
+use std::collections::HashMap;
 
 pub struct AppState {
     pub config: Config,
@@ -46,7 +46,7 @@ impl<'a> App<'a> {
         let records_view = RecordsViewComponent::new();
         let result_view = ResultViewComponent::new();
         let help_text = HelpTextComponent::new();
-        let help_view = HelpViewComponent::new(None);
+        let help_view = HelpViewComponent::new(App::help_view_text((0, 0)));
 
         let app_state = AppState::new();
         App {
@@ -151,18 +151,23 @@ impl<'a> App<'a> {
         match self.selected_pane {
             (0, 0) => {
                 self.connection_list.event(&k, &self.app_state)?;
+                self.help_view = HelpViewComponent::new(App::help_view_text(self.selected_pane));
             }
             (0, 1) => {
                 self.database_list.event(&k, &self.app_state)?;
+                self.help_view = HelpViewComponent::new(App::help_view_text(self.selected_pane));
             }
             (0, 2) => {
                 self.table_list.event(&k, &self.app_state)?;
+                self.help_view = HelpViewComponent::new(App::help_view_text(self.selected_pane));
             }
             (1, 0) => {
                 self.tab.event(&k, &self.app_state)?;
+                self.help_view = HelpViewComponent::new(App::help_view_text(self.selected_pane));
             }
             (1, 3) => {
                 self.command.event(&k, &self.app_state)?;
+                self.help_view = HelpViewComponent::new(App::help_view_text(self.selected_pane));
             }
             (99, 99) => {
                 self.help_view.event(&k, &self.app_state)?;
@@ -215,6 +220,12 @@ impl<'a> App<'a> {
 
                 self.exit = true;
             }
+            Keys::Esc => {
+                if self.selected_pane == (99, 99) {
+                    self.selected_pane = self.previous_selected_pane;
+                    return Ok(EventState::Consumed);
+                }
+            }
             Keys::Char('?') => {
                 self.previous_selected_pane = self.selected_pane;
                 self.selected_pane = (99, 99);
@@ -224,10 +235,10 @@ impl<'a> App<'a> {
         Ok(EventState::Consumed)
     }
 
-    fn help_view_text(selected_pane: (u8,u8)) -> HashMap<String, String> {
+    fn help_view_text(selected_pane: (u8, u8)) -> Option<HashMap<&'static str, &'static str>> {
         match selected_pane {
-            (0,0) => HashMap::from()
-            _ => HashMap::new()
+            (0, 0) => return Some(DatabaseListComponent::help_content_text()),
+            _ => return None,
         }
     }
 
