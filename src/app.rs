@@ -26,8 +26,10 @@ pub struct App<'a> {
     records_view: RecordsViewComponent<'a>,
     result_view: ResultViewComponent,
     help_text: HelpTextComponent,
+    help_view: HelpViewComponent,
 
     selected_pane: (u8, u8), // x,y
+    previous_selected_pane: (u8, u8),
     max_pane_column: [u8; 2],
     pub exit: bool,
     pub app_state: AppState,
@@ -43,6 +45,7 @@ impl<'a> App<'a> {
         let records_view = RecordsViewComponent::new();
         let result_view = ResultViewComponent::new();
         let help_text = HelpTextComponent::new();
+        let help_view = HelpViewComponent::new(None);
 
         let app_state = AppState::new();
         App {
@@ -56,8 +59,10 @@ impl<'a> App<'a> {
             command,
 
             help_text,
+            help_view,
 
             selected_pane: (0, 0),
+            previous_selected_pane: (0, 0),
             max_pane_column: [3, 2],
             exit: false,
             app_state,
@@ -66,10 +71,9 @@ impl<'a> App<'a> {
     pub fn draw(&mut self, frame: &mut Frame) -> anyhow::Result<()> {
         if let Some(paragraph) = self.verify_space_available(frame) {
             frame.render_widget(paragraph, frame.size());
-            return Ok(())
+            return Ok(());
         }
 
-        
         let select_connection_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 0;
         let select_database_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 1;
         let select_table_list = self.selected_pane.0 == 0 && self.selected_pane.1 == 2;
@@ -124,6 +128,20 @@ impl<'a> App<'a> {
 
         self.help_text
             .draw(frame, main_area[1], false, &self.app_state)?;
+
+        if self.selected_pane == (99, 99) {
+            self.help_view.draw(
+                frame,
+                Rect::new(
+                    main_area[0].width / 2 - 25,
+                    main_area[0].height / 2 - 12,
+                    50,
+                    25,
+                ),
+                true,
+                &self.app_state,
+            )?;
+        }
         Ok(())
     }
 
@@ -144,6 +162,9 @@ impl<'a> App<'a> {
             }
             (1, 3) => {
                 self.command.event(&k, &self.app_state)?;
+            }
+            (99, 99) => {
+                self.help_view.event(&k, &self.app_state)?;
             }
             (_, _) => {}
         }
@@ -181,14 +202,37 @@ impl<'a> App<'a> {
                 self.selected_pane.0 = if self.selected_pane.0 == 0 { 1 } else { 0 };
             }
             Keys::Char('q') => {
-                if self.selected_pane.0 == 1 && self.selected_pane.1 == 3 {
+                // don't quit if we are in command pane
+                if self.selected_pane == (1, 3) {
                     return Ok(EventState::Wasted);
                 }
+
+                if self.selected_pane == (99, 99) {
+                    self.selected_pane = self.previous_selected_pane;
+                    return Ok(EventState::Consumed);
+                }
+
                 self.exit = true;
+            }
+            Keys::Char('?') => {
+                self.previous_selected_pane = self.selected_pane;
+                self.selected_pane = (99, 99);
             }
             _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
+    }
+
+    fn set_help_view_text(&mut self,selected_pane: (u8, u8)) {
+        match selected_pane {
+            (0,0) => {
+                self.help_view = HelpViewComponent::new(Some(std::collections::HashMap::from([(
+                    "hello".into(),
+                    "world".into(),
+                )])));
+            }
+            _=>{}
+        }
     }
 
     fn verify_space_available(&mut self, frame: &mut Frame) -> Option<Paragraph> {

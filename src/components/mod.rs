@@ -14,6 +14,7 @@ pub mod result_view;
 pub mod tab;
 pub mod table_list;
 pub mod help_text;
+pub mod help_view;
 
 pub mod command;
 
@@ -25,6 +26,7 @@ pub use result_view::ResultViewComponent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
 pub use help_text::HelpTextComponent;
+pub use help_view::HelpViewComponent;
 
 fn selected_color(selected: bool, theme_config: ThemeConfig) -> Color {
     if selected {
