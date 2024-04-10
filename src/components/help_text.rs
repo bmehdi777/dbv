@@ -1,4 +1,4 @@
-use super::{centered_rect, Component};
+use super::Component;
 use crate::{
     app::AppState,
     events::{key::Keys, EventState},
