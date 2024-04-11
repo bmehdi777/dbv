@@ -30,6 +30,10 @@ impl MutableComponent for InputPopupComponent {
                 self.content.pop();
             }
             Keys::Enter => {
+                if self.content.trim().len() == 0 {
+                    app_state.selected_pane = app_state.previous_selected_pane;
+                    return Ok(EventState::Escaped);
+                }
                 let event = Ok(EventState::ConfirmedText(self.content.clone()));
                 self.content = String::new();
                 return event;

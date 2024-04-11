@@ -167,7 +167,6 @@ impl<'a> App<'a> {
             }
             _ => {}
         }
-
         Ok(())
     }
 
@@ -224,7 +223,6 @@ impl<'a> App<'a> {
                 if let EventState::ConfirmedText(content) = event {
                     // todo
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
-                    
                 }
             }
             (100, 100) => {
@@ -246,73 +244,75 @@ impl<'a> App<'a> {
     }
 
     fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
-        match input {
-            Keys::CtrlChar('j') => {
-                let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
-                if self.app_state.selected_pane.1 == max_pane - 1 {
-                    self.app_state.selected_pane.1 = 0;
-                } else {
-                    self.app_state.selected_pane.1 += 1;
+        if self.app_state.selected_pane != (101, 101) && self.app_state.selected_pane != (1, 3) {
+            match input {
+                Keys::CtrlChar('j') => {
+                    let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
+                    if self.app_state.selected_pane.1 == max_pane - 1 {
+                        self.app_state.selected_pane.1 = 0;
+                    } else {
+                        self.app_state.selected_pane.1 += 1;
+                    }
                 }
-            }
-            Keys::CtrlChar('k') => {
-                let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
-                if self.app_state.selected_pane.1 == 0 {
-                    self.app_state.selected_pane.1 = max_pane - 1;
-                } else {
-                    self.app_state.selected_pane.1 -= 1;
+                Keys::CtrlChar('k') => {
+                    let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
+                    if self.app_state.selected_pane.1 == 0 {
+                        self.app_state.selected_pane.1 = max_pane - 1;
+                    } else {
+                        self.app_state.selected_pane.1 -= 1;
+                    }
                 }
-            }
-            Keys::CtrlChar('l') => {
-                if self.app_state.selected_pane.1 >= 2 {
-                    self.app_state.selected_pane.1 = 1;
+                Keys::CtrlChar('l') => {
+                    if self.app_state.selected_pane.1 >= 2 {
+                        self.app_state.selected_pane.1 = 1;
+                    }
+                    self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 1 {
+                        0
+                    } else {
+                        1
+                    };
                 }
-                self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 1 {
-                    0
-                } else {
-                    1
-                };
-            }
-            Keys::CtrlChar('h') => {
-                if self.app_state.selected_pane.1 >= 2 {
-                    self.app_state.selected_pane.1 = 1;
+                Keys::CtrlChar('h') => {
+                    if self.app_state.selected_pane.1 >= 2 {
+                        self.app_state.selected_pane.1 = 1;
+                    }
+                    self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 0 {
+                        1
+                    } else {
+                        0
+                    };
                 }
-                self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 0 {
-                    1
-                } else {
-                    0
-                };
-            }
-            Keys::Char('q') => {
-                // don't quit if we are in command pane
-                if self.app_state.selected_pane == (1, 3)
-                    || self.app_state.selected_pane == (101, 101)
-                {
-                    return Ok(EventState::Wasted);
-                }
+                Keys::Char('q') => {
+                    // don't quit if we are in command or popup pane
+                    if self.app_state.selected_pane == (1, 3)
+                        || self.app_state.selected_pane == (101, 101)
+                    {
+                        return Ok(EventState::Wasted);
+                    }
 
-                if self.app_state.selected_pane == (100, 100) {
-                    self.app_state.selected_pane = self.app_state.previous_selected_pane;
-                    return Ok(EventState::Consumed);
-                }
+                    if self.app_state.selected_pane == (100, 100) {
+                        self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                        return Ok(EventState::Consumed);
+                    }
 
-                self.app_state.exit = true;
-            }
-            Keys::Esc => {
-                if self.app_state.selected_pane == (100, 100) {
-                    self.app_state.selected_pane = self.app_state.previous_selected_pane;
-                    return Ok(EventState::Consumed);
+                    self.app_state.exit = true;
                 }
+                Keys::Esc => {
+                    if self.app_state.selected_pane == (100, 100) {
+                        self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                        return Ok(EventState::Consumed);
+                    }
+                }
+                Keys::Char('?') => {
+                    self.app_state.previous_selected_pane = self.app_state.selected_pane;
+                    self.app_state.selected_pane = (100, 100);
+                }
+                Keys::Char(':') => {
+                    self.app_state.previous_selected_pane = self.app_state.selected_pane;
+                    self.app_state.selected_pane = (1, 3);
+                }
+                _ => return Ok(EventState::Wasted),
             }
-            Keys::Char('?') => {
-                self.app_state.previous_selected_pane = self.app_state.selected_pane;
-                self.app_state.selected_pane = (100, 100);
-            }
-            Keys::Char(':') => {
-                self.app_state.previous_selected_pane = self.app_state.selected_pane;
-                self.app_state.selected_pane = (1, 3);
-            }
-            _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
     }
