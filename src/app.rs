@@ -224,6 +224,7 @@ impl<'a> App<'a> {
                 if let EventState::ConfirmedText(content) = event {
                     // todo
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                    
                 }
             }
             (100, 100) => {

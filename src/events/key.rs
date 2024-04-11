@@ -1,5 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Keys {
     ArrowLeft,
     ArrowRight,

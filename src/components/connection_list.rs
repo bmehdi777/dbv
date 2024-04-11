@@ -9,12 +9,20 @@ use ratatui::{prelude::*, widgets::*};
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
     list_state: ListState,
+    buffer_input: Vec<Keys>,
 }
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
         let list_state = ListState::default();
-        ConnectionListComponent { list_state }
+        ConnectionListComponent {
+            list_state,
+            buffer_input: Vec::new(),
+        }
+    }
+
+    fn consume_buffer_input() {
+        // todo
     }
 }
 
@@ -54,9 +62,14 @@ impl MutableComponent for ConnectionListComponent {
                             .select(Some(app_state.connection_list.list.len() - 1));
                     }
                 }
+                Keys::Char('d') => {
+                    self.buffer_input.push(Keys::Char('d'));
+                }
                 _ => return Ok(EventState::Wasted),
             }
         }
+
+
         Ok(EventState::Consumed)
     }
 
@@ -67,7 +80,7 @@ impl MutableComponent for ConnectionListComponent {
         selected: bool,
         app_state: &AppState,
     ) -> anyhow::Result<()> {
-        let container = Block::default()
+        let mut container = Block::default()
             .title("Connections")
             .borders(Borders::ALL)
             .border_style(
@@ -76,6 +89,11 @@ impl MutableComponent for ConnectionListComponent {
             .border_type(BorderType::Rounded);
 
         if app_state.connection_list.list.len() > 0 {
+            let selected_idx = if let Some(index) = self.list_state.selected() {
+                index+1
+            } else {
+                0
+            };
             let list = List::new(
                 app_state
                     .connection_list
@@ -83,7 +101,11 @@ impl MutableComponent for ConnectionListComponent {
                     .iter()
                     .map(|item| item.connection_string.clone()),
             )
-            .block(container)
+            .block(container.title_bottom(format!(
+                "{} of {}",
+                selected_idx,
+                app_state.connection_list.list.len()
+            )))
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 
@@ -93,7 +115,7 @@ impl MutableComponent for ConnectionListComponent {
                 .style(Style::new().italic())
                 .centered();
 
-            frame.render_widget(container, area);
+            frame.render_widget(container.title_bottom("0 of 0"), area);
             frame.render_widget(no_data, centered_rect(area, 50, 20))
         }
 

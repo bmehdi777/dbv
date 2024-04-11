@@ -29,7 +29,11 @@ impl MutableComponent for InputPopupComponent {
             Keys::Backspace => {
                 self.content.pop();
             }
-            Keys::Enter => return Ok(EventState::ConfirmedText(self.content.clone())),
+            Keys::Enter => {
+                let event = Ok(EventState::ConfirmedText(self.content.clone()));
+                self.content = String::new();
+                return event;
+            }
             Keys::Char(c) => {
                 self.content.push_str(&c.to_string());
             }
