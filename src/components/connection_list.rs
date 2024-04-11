@@ -69,7 +69,6 @@ impl MutableComponent for ConnectionListComponent {
             }
         }
 
-
         Ok(EventState::Consumed)
     }
 
@@ -90,7 +89,7 @@ impl MutableComponent for ConnectionListComponent {
 
         if app_state.connection_list.list.len() > 0 {
             let selected_idx = if let Some(index) = self.list_state.selected() {
-                index+1
+                index + 1
             } else {
                 0
             };
@@ -106,6 +105,9 @@ impl MutableComponent for ConnectionListComponent {
                 selected_idx,
                 app_state.connection_list.list.len()
             )))
+            .style(
+                Style::default().fg(self.get_color(app_state.config.theme_config.unselected_color)),
+            )
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 
