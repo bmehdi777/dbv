@@ -4,4 +4,5 @@
 
 ## Technical thought - only for me
 
-- add generic popup (help popup, new item popup...)
+- on every action, add text to log output (through app_state)
+- add selection on connection list
