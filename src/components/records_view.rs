@@ -30,7 +30,7 @@ impl<'a> RecordsViewComponent<'a> {
 }
 
 impl<'a> MutableComponent for RecordsViewComponent<'a> {
-    fn event(&mut self, _input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, _input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         Ok(EventState::Wasted)
     }
 

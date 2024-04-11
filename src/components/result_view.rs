@@ -15,7 +15,7 @@ impl ResultViewComponent {
 }
 
 impl MutableComponent for ResultViewComponent {
-    fn event(&mut self, _input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, _input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         todo!()
     }
 

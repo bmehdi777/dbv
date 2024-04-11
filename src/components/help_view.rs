@@ -12,23 +12,32 @@ pub trait HelpContentText {
 }
 
 pub struct HelpViewComponent {
-    help_content: HashMap<&'static str, &'static str>,
+    pub id: u32,
+    content: HashMap<&'static str, &'static str>,
+    title: String,
     scrollstate: ScrollbarState,
     tablestate: TableState,
 }
 
 impl HelpViewComponent {
-    pub fn new(help_content: Option<HashMap<&'static str, &'static str>>) -> HelpViewComponent {
-        if let Some(hc) = help_content {
-            log::debug!("{:?}", &hc);
+    pub fn new(
+        id: u32,
+        title: String,
+        content: Option<HashMap<&'static str, &'static str>>,
+    ) -> HelpViewComponent {
+        if let Some(hc) = content {
             return HelpViewComponent {
-                help_content: hc.clone(),
+                id,
+                content: hc.clone(),
+                title,
                 scrollstate: ScrollbarState::new(hc.len()).position(0),
                 tablestate: TableState::default(),
             };
         }
         HelpViewComponent {
-            help_content: HashMap::new(),
+            id,
+            content: HashMap::new(),
+            title,
             scrollstate: ScrollbarState::new(0).position(0),
             tablestate: TableState::default(),
         }
@@ -36,11 +45,11 @@ impl HelpViewComponent {
 }
 
 impl MutableComponent for HelpViewComponent {
-    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.tablestate.selected() {
-                    let index = if i == self.help_content.len() - 1 {
+                    let index = if i == self.content.len() - 1 {
                         0
                     } else {
                         i + 1
@@ -56,21 +65,19 @@ impl MutableComponent for HelpViewComponent {
             Keys::Char('k') => {
                 if let Some(i) = self.tablestate.selected() {
                     let index = if i == 0 {
-                        self.help_content.len() - 1
+                        self.content.len() - 1
                     } else {
                         i - 1
                     };
                     self.tablestate.select(Some(index));
                     self.scrollstate.prev();
                 } else {
-                    let max = self.help_content.len() - 1;
+                    let max = self.content.len() - 1;
                     self.tablestate.select(Some(max));
                     self.scrollstate = self.scrollstate.position(max);
                 }
             }
-            Keys::Enter => {
-
-            }
+            Keys::Enter => {}
             _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
@@ -83,14 +90,15 @@ impl MutableComponent for HelpViewComponent {
         app_state: &AppState,
     ) -> anyhow::Result<()> {
         let container = Block::default()
-            .title("Help")
+            .title(format!("Help - {}", self.title))
             .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
             .border_style(
                 Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
             );
 
         let table = Table::new(
-            self.help_content
+            self.content
                 .iter()
                 .map(|(key, value)| {
                     Row::new(vec![

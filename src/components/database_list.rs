@@ -1,9 +1,9 @@
-use std::collections::HashMap;
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
     app::AppState,
     events::{key::Keys, EventState},
 };
+use std::collections::HashMap;
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -33,7 +33,7 @@ impl DatabaseListComponent {
 }
 
 impl MutableComponent for DatabaseListComponent {
-    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         if self.database_items.len() > 0 {
             match input {
                 Keys::Char('j') => {

@@ -32,7 +32,7 @@ impl TableListComponent {
 }
 
 impl MutableComponent for TableListComponent {
-    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         log::info!("New input in TableListComponent");
         if self.table_items.len() > 0 {
             match input {

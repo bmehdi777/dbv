@@ -34,7 +34,7 @@ impl TabComponent {
 }
 
 impl MutableComponent for TabComponent {
-    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('l') | Keys::ArrowRight => {
                 if self.selected_tab == self.tabs.len() - 1 {

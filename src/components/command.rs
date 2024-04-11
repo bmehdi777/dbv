@@ -19,14 +19,22 @@ impl CommandComponent {
 }
 
 impl MutableComponent for CommandComponent {
-    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Backspace => {
                 self.text_input.pop();
             }
-            Keys::Enter => {}
+            Keys::Enter => {
+                let result = Ok(EventState::ConfirmedText(self.text_input.clone()));
+                self.text_input = String::new();
+                return result;
+            }
             Keys::Char(c) => {
                 self.text_input.push_str(&c.to_string());
+            }
+            Keys::Esc => {
+                self.text_input = String::new();
+                app_state.selected_pane = app_state.previous_selected_pane;
             }
             _ => return Ok(EventState::Wasted),
         }
@@ -53,7 +61,9 @@ impl MutableComponent for CommandComponent {
             .block(container)
             .style(Style::new().white())
             .alignment(Alignment::Left);
-
+        if selected {
+            frame.set_cursor(area.x + 2 + self.text_input.len() as u16, area.y + 1);
+        }
         frame.render_widget(text, area);
         Ok(())
     }

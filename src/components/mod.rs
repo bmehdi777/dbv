@@ -15,6 +15,7 @@ pub mod records_view;
 pub mod result_view;
 pub mod tab;
 pub mod table_list;
+pub mod input_popup;
 
 pub mod command;
 
@@ -27,6 +28,7 @@ pub use records_view::RecordsViewComponent;
 pub use result_view::ResultViewComponent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
+pub use input_popup::InputPopupComponent;
 
 pub use help_view::HelpContentText;
 
@@ -68,7 +70,7 @@ pub trait Component {
 }
 
 pub trait MutableComponent {
-    fn event(&mut self, input: &Keys, app_state: &AppState) -> Result<EventState>;
+    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> Result<EventState>;
     fn draw(
         &mut self,
         frame: &mut Frame,
