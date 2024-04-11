@@ -36,9 +36,44 @@ impl HelpViewComponent {
 }
 
 impl MutableComponent for HelpViewComponent {
-    fn event(&mut self, _input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
-        Ok(EventState::Wasted)
-        // todo
+    fn event(&mut self, input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+        match input {
+            Keys::Char('j') => {
+                if let Some(i) = self.tablestate.selected() {
+                    let index = if i == self.help_content.len() - 1 {
+                        0
+                    } else {
+                        i + 1
+                    };
+
+                    self.tablestate.select(Some(index));
+                    self.scrollstate.next();
+                } else {
+                    self.tablestate.select(Some(0));
+                    self.scrollstate = self.scrollstate.position(0);
+                }
+            }
+            Keys::Char('k') => {
+                if let Some(i) = self.tablestate.selected() {
+                    let index = if i == 0 {
+                        self.help_content.len() - 1
+                    } else {
+                        i - 1
+                    };
+                    self.tablestate.select(Some(index));
+                    self.scrollstate.prev();
+                } else {
+                    let max = self.help_content.len() - 1;
+                    self.tablestate.select(Some(max));
+                    self.scrollstate = self.scrollstate.position(max);
+                }
+            }
+            Keys::Enter => {
+
+            }
+            _ => return Ok(EventState::Wasted),
+        }
+        Ok(EventState::Consumed)
     }
     fn draw(
         &mut self,

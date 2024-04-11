@@ -108,7 +108,7 @@ impl HelpContentText for DatabaseListComponent {
         HashMap::from([
             ("i", "Insert a new database connection"),
             ("dd", "Delete the database connection"),
-            ("e", "Edit the database connection")
+            ("e", "Edit the database connection"),
         ])
     }
 }
