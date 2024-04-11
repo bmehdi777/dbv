@@ -48,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
             }
         };
 
-        if app.exit {
+        if app.app_state.exit {
             break;
         }
     }

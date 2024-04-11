@@ -8,12 +8,14 @@ use std::collections::HashMap;
 
 pub struct AppState {
     pub config: Config,
+    pub exit: bool,
 }
 
 impl AppState {
     pub fn new() -> Self {
         AppState {
             config: Config::default().load(),
+            exit: false,
         }
     }
 }
@@ -32,7 +34,6 @@ pub struct App<'a> {
     selected_pane: (u8, u8), // x,y
     previous_selected_pane: (u8, u8),
     max_pane_column: [u8; 2],
-    pub exit: bool,
     pub app_state: AppState,
 }
 
@@ -65,7 +66,6 @@ impl<'a> App<'a> {
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
             max_pane_column: [3, 2],
-            exit: false,
             app_state,
         }
     }
@@ -218,7 +218,7 @@ impl<'a> App<'a> {
                     return Ok(EventState::Consumed);
                 }
 
-                self.exit = true;
+                self.app_state.exit = true;
             }
             Keys::Esc => {
                 if self.selected_pane == (99, 99) {

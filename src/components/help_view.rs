@@ -88,8 +88,7 @@ impl MutableComponent for HelpViewComponent {
             .border_style(
                 Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
             );
-        log::debug!("render");
-        log::debug!("{:?}", self.help_content);
+
         let table = Table::new(
             self.help_content
                 .iter()
