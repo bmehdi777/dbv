@@ -11,6 +11,7 @@ pub enum LogContent {
     Debug(String),
     Info(String),
     Error(String),
+    Success(String),
 }
 
 impl<'a> From<LogContent> for ListItem<'a> {
@@ -20,6 +21,13 @@ impl<'a> From<LogContent> for ListItem<'a> {
                 log::info!("{}", content);
                 return ListItem::new(Line::from(vec![
                     Span::from("[INFO] ").style(Style::new().blue()),
+                    content.into(),
+                ]));
+            }
+            LogContent::Success(content) => {
+                log::info!("SUCCESS - {}", content);
+                return ListItem::new(Line::from(vec![
+                    Span::from("[SUCCESS] ").style(Style::new().green()),
                     content.into(),
                 ]));
             }
@@ -33,7 +41,7 @@ impl<'a> From<LogContent> for ListItem<'a> {
             LogContent::Debug(content) => {
                 log::debug!("{}", content);
                 return ListItem::new(Line::from(vec![
-                    Span::from("[DEBUG] ").style(Style::new().green()),
+                    Span::from("[DEBUG] ").style(Style::new().gray()),
                     content.into(),
                 ]));
             }
@@ -41,26 +49,30 @@ impl<'a> From<LogContent> for ListItem<'a> {
     }
 }
 
-pub struct ResultViewComponent {
+pub struct LogViewComponent {
     list_state: ListState,
     position_scroll: usize,
 }
 
-impl ResultViewComponent {
+impl LogViewComponent {
     pub fn new() -> Self {
-        ResultViewComponent {
+        LogViewComponent {
             list_state: ListState::default(),
             position_scroll: 0,
         }
     }
 }
 
-impl MutableComponent for ResultViewComponent {
+impl MutableComponent for LogViewComponent {
     fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.list_state.selected() {
-                    let index = if i == app_state.log_contents().len() - 1 { 0 } else { i + 1 };
+                    let index = if i == app_state.log_contents().len() - 1 {
+                        0
+                    } else {
+                        i + 1
+                    };
 
                     self.list_state.select(Some(index));
                     self.position_scroll = index;
@@ -71,12 +83,17 @@ impl MutableComponent for ResultViewComponent {
             }
             Keys::Char('k') => {
                 if let Some(i) = self.list_state.selected() {
-                    let index = if i == 0 { app_state.log_contents().len() - 1 } else { i - 1 };
+                    let index = if i == 0 {
+                        app_state.log_contents().len() - 1
+                    } else {
+                        i - 1
+                    };
                     self.list_state.select(Some(index));
                     self.position_scroll = index;
                 } else {
-                    self.list_state.select(Some(app_state.log_contents().len() - 1));
-                    self.position_scroll = app_state.log_contents().len()-1;
+                    self.list_state
+                        .select(Some(app_state.log_contents().len() - 1));
+                    self.position_scroll = app_state.log_contents().len() - 1;
                 }
             }
             _ => return Ok(EventState::Wasted),
@@ -100,7 +117,14 @@ impl MutableComponent for ResultViewComponent {
             )
             .border_type(BorderType::Rounded);
 
-        let list = List::new(app_state.log_contents().iter().map(|item| LogContent::from(item.clone()))).block(container);
+        let list = List::new(
+            app_state
+                .log_contents()
+                .iter()
+                .map(|item| LogContent::from(item.clone())),
+        )
+        .block(container)
+        .highlight_style(Style::default().reversed());
 
         let mut scrollbar_state = ScrollbarState::default()
             .content_length(app_state.log_contents().len())

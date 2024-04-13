@@ -32,6 +32,9 @@ impl AppState {
     pub fn log(&mut self, content: &str) {
         self.log_contents.push(LogContent::Info(content.into()))
     }
+    pub fn success(&mut self, content: &str) {
+        self.log_contents.push(LogContent::Success(content.into()))
+    }
     pub fn error(&mut self, content: &str) {
         self.log_contents.push(LogContent::Error(content.into()))
     }
@@ -52,7 +55,7 @@ pub struct App<'a> {
     records_view: RecordsViewComponent<'a>,
     help_text: HelpTextComponent,
     help_view: HelpViewComponent,
-    log_view: ResultViewComponent,
+    log_view: LogViewComponent,
 
     popup: InputPopupComponent,
 
@@ -71,7 +74,7 @@ impl<'a> App<'a> {
         let help_text = HelpTextComponent::new();
         let help_view =
             HelpViewComponent::new(0, "Connections list".into(), App::help_view_text((0, 0)));
-        let log_view = ResultViewComponent::new();
+        let log_view = LogViewComponent::new();
         let popup = InputPopupComponent::default();
 
         let app_state = AppState::new();
@@ -230,6 +233,9 @@ impl<'a> App<'a> {
                     App::help_view_text(self.app_state.selected_pane),
                 );
             }
+            (1,2) => {
+                self.log_view.event(&k, &mut self.app_state)?;
+            }
             (1, 3) => {
                 if self.help_view.id != 4 {
                     self.help_view = HelpViewComponent::new(
@@ -253,7 +259,7 @@ impl<'a> App<'a> {
                     self.app_state
                         .connection_list
                         .list
-                        .push(DatabaseConnection::new(content));
+                        .push(DatabaseConnection::new(content.clone()));
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
 
                     // add log
