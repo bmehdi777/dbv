@@ -13,19 +13,33 @@ pub struct AppState {
     pub exit: bool,
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
+
+    pub log_view: ResultViewComponent,
 }
 
 impl AppState {
     pub fn new() -> Self {
+        let log_view = ResultViewComponent::new();
         AppState {
             config: Config::default().load(),
             connection_list: DatabaseConnectionList::new(),
             exit: false,
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
+            log_view,
         }
     }
-}
+
+    pub fn log(content: String) {
+
+    }
+    pub fn error(content: String) {
+
+    }
+    pub fn debug(content: String) {
+
+    }
+} 
 
 pub struct App<'a> {
     tab: TabComponent,
@@ -34,7 +48,6 @@ pub struct App<'a> {
     table_list: TableListComponent,
     command: CommandComponent,
     records_view: RecordsViewComponent<'a>,
-    result_view: ResultViewComponent,
     help_text: HelpTextComponent,
     help_view: HelpViewComponent,
 
@@ -52,7 +65,6 @@ impl<'a> App<'a> {
         let table_list = TableListComponent::new();
         let command = CommandComponent::new();
         let records_view = RecordsViewComponent::new();
-        let result_view = ResultViewComponent::new();
         let help_text = HelpTextComponent::new();
         let help_view =
             HelpViewComponent::new(0, "Connections list".into(), App::help_view_text((0, 0)));
@@ -66,7 +78,6 @@ impl<'a> App<'a> {
             table_list,
 
             records_view,
-            result_view,
             command,
 
             help_text,
@@ -74,7 +85,7 @@ impl<'a> App<'a> {
 
             popup,
 
-            max_pane_column: [3, 2],
+            max_pane_column: [3, 3],
             app_state,
         }
     }
@@ -94,6 +105,8 @@ impl<'a> App<'a> {
         let select_tab = self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 0;
         let select_records_view =
             self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 1;
+        let select_log_view =
+            self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 2;
         let select_command =
             self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 3;
 
@@ -134,10 +147,10 @@ impl<'a> App<'a> {
 
         self.tab
             .draw(frame, right_area[0], select_tab, &self.app_state)?;
-        self.result_view
-            .draw(frame, right_area[2], false, &self.app_state)?;
         self.records_view
             .draw(frame, right_area[1], select_records_view, &self.app_state)?;
+        self.log_view
+            .draw(frame, right_area[2], select_log_view, &self.app_state)?;
         self.command
             .draw(frame, right_area[3], select_command, &self.app_state)?;
 
@@ -167,6 +180,7 @@ impl<'a> App<'a> {
             }
             _ => {}
         }
+
         Ok(())
     }
 
@@ -236,6 +250,12 @@ impl<'a> App<'a> {
                         .list
                         .push(DatabaseConnection::new(content));
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
+
+                    // add log
+                    self.app_state
+                        .result_log
+                        .push(String::from("A new connection string has been added."));
+                    self.log_view.update_log(&self.app_state);
                 }
             }
             (_, _) => {}
@@ -263,7 +283,7 @@ impl<'a> App<'a> {
                     }
                 }
                 Keys::CtrlChar('l') => {
-                    if self.app_state.selected_pane.1 >= 2 {
+                    if self.app_state.selected_pane.1 >= 3 {
                         self.app_state.selected_pane.1 = 1;
                     }
                     self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 1 {
@@ -273,7 +293,7 @@ impl<'a> App<'a> {
                     };
                 }
                 Keys::CtrlChar('h') => {
-                    if self.app_state.selected_pane.1 >= 2 {
+                    if self.app_state.selected_pane.1 >= 3 {
                         self.app_state.selected_pane.1 = 1;
                     }
                     self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 0 {

@@ -14,9 +14,8 @@ pub struct ConnectionListComponent {
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
-        let list_state = ListState::default();
         ConnectionListComponent {
-            list_state,
+            list_state: ListState::default(),
             buffer_input: Vec::new(),
         }
     }
@@ -79,7 +78,7 @@ impl MutableComponent for ConnectionListComponent {
         selected: bool,
         app_state: &AppState,
     ) -> anyhow::Result<()> {
-        let mut container = Block::default()
+        let container = Block::default()
             .title("Connections")
             .borders(Borders::ALL)
             .border_style(
