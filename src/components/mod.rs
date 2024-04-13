@@ -26,6 +26,7 @@ pub use help_text::HelpTextComponent;
 pub use help_view::HelpViewComponent;
 pub use records_view::RecordsViewComponent;
 pub use result_view::ResultViewComponent;
+pub use result_view::LogContent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
 pub use input_popup::InputPopupComponent;

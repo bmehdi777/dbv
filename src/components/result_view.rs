@@ -6,66 +6,77 @@ use crate::{
 
 use ratatui::{prelude::*, widgets::*};
 
+#[derive(Debug, Clone)]
 pub enum LogContent {
     Debug(String),
     Info(String),
     Error(String),
 }
 
-impl<'a> Into<Paragraph<'a>> for LogContent {
-    fn into(self) -> Paragraph<'a> {
-        todo!();
+impl<'a> From<LogContent> for ListItem<'a> {
+    fn from(val: LogContent) -> Self {
+        match val {
+            LogContent::Info(content) => {
+                log::info!("{}", content);
+                return ListItem::new(Line::from(vec![
+                    Span::from("[INFO] ").style(Style::new().blue()),
+                    content.into(),
+                ]));
+            }
+            LogContent::Error(content) => {
+                log::error!("{}", content);
+                return ListItem::new(Line::from(vec![
+                    Span::from("[ERROR] ").style(Style::new().red()),
+                    content.into(),
+                ]));
+            }
+            LogContent::Debug(content) => {
+                log::debug!("{}", content);
+                return ListItem::new(Line::from(vec![
+                    Span::from("[DEBUG] ").style(Style::new().green()),
+                    content.into(),
+                ]));
+            }
+        }
     }
 }
 
 pub struct ResultViewComponent {
-    log: Vec<LogContent>,
     list_state: ListState,
-    scrollbar_state: ScrollbarState,
+    position_scroll: usize,
 }
 
 impl ResultViewComponent {
     pub fn new() -> Self {
         ResultViewComponent {
-            log: Vec::new(),
             list_state: ListState::default(),
-            scrollbar_state: ScrollbarState::new(0).position(0),
+            position_scroll: 0,
         }
-    }
-
-    pub fn update_log(&mut self) {
-        self.scrollbar_state = self
-            .scrollbar_state
-            .content_length(self.log.len());
     }
 }
 
 impl MutableComponent for ResultViewComponent {
-    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.list_state.selected() {
-                    let index = if i == self.log.len() - 1 {
-                        0
-                    } else {
-                        i + 1
-                    };
+                    let index = if i == app_state.log_contents().len() - 1 { 0 } else { i + 1 };
 
                     self.list_state.select(Some(index));
+                    self.position_scroll = index;
                 } else {
                     self.list_state.select(Some(0));
+                    self.position_scroll = 0;
                 }
             }
             Keys::Char('k') => {
                 if let Some(i) = self.list_state.selected() {
-                    let index = if i == 0 {
-                        self.log.len() - 1
-                    } else {
-                        i - 1
-                    };
+                    let index = if i == 0 { app_state.log_contents().len() - 1 } else { i - 1 };
                     self.list_state.select(Some(index));
+                    self.position_scroll = index;
                 } else {
-                    self.list_state.select(Some(self.log.len() - 1));
+                    self.list_state.select(Some(app_state.log_contents().len() - 1));
+                    self.position_scroll = app_state.log_contents().len()-1;
                 }
             }
             _ => return Ok(EventState::Wasted),
@@ -89,8 +100,12 @@ impl MutableComponent for ResultViewComponent {
             )
             .border_type(BorderType::Rounded);
 
-        let list = List::new(self.log.iter().map(|item| item.clone())).block(container);
+        let list = List::new(app_state.log_contents().iter().map(|item| LogContent::from(item.clone()))).block(container);
 
+        let mut scrollbar_state = ScrollbarState::default()
+            .content_length(app_state.log_contents().len())
+            .viewport_content_length(frame.size().height.into())
+            .position(self.position_scroll);
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
             .begin_symbol(Some("▲"))
             .end_symbol(Some("▼"));
@@ -102,7 +117,7 @@ impl MutableComponent for ResultViewComponent {
                 vertical: 1,
                 horizontal: 0,
             }),
-            &mut self.scrollbar_state,
+            &mut scrollbar_state,
         );
         Ok(())
     }

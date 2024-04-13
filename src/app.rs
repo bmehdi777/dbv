@@ -14,30 +14,32 @@ pub struct AppState {
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
 
-    pub log_view: ResultViewComponent,
+    log_contents: Vec<LogContent>
 }
 
 impl AppState {
     pub fn new() -> Self {
-        let log_view = ResultViewComponent::new();
         AppState {
             config: Config::default().load(),
             connection_list: DatabaseConnectionList::new(),
             exit: false,
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
-            log_view,
+            log_contents: Vec::new(),
         }
     }
 
-    pub fn log(content: String) {
-
+    pub fn log(&mut self, content: &str) {
+        self.log_contents.push(LogContent::Info(content.into()))
     }
-    pub fn error(content: String) {
-
+    pub fn error(&mut self, content: &str) {
+        self.log_contents.push(LogContent::Error(content.into()))
     }
-    pub fn debug(content: String) {
-
+    pub fn debug(&mut self, content: &str) {
+        self.log_contents.push(LogContent::Debug(content.into()))
+    }
+    pub fn log_contents(&self) -> &Vec<LogContent> {
+        &self.log_contents
     }
 } 
 
@@ -50,6 +52,7 @@ pub struct App<'a> {
     records_view: RecordsViewComponent<'a>,
     help_text: HelpTextComponent,
     help_view: HelpViewComponent,
+    log_view: ResultViewComponent,
 
     popup: InputPopupComponent,
 
@@ -68,6 +71,7 @@ impl<'a> App<'a> {
         let help_text = HelpTextComponent::new();
         let help_view =
             HelpViewComponent::new(0, "Connections list".into(), App::help_view_text((0, 0)));
+        let log_view = ResultViewComponent::new();
         let popup = InputPopupComponent::default();
 
         let app_state = AppState::new();
@@ -78,6 +82,7 @@ impl<'a> App<'a> {
             table_list,
 
             records_view,
+            log_view,
             command,
 
             help_text,
@@ -252,10 +257,9 @@ impl<'a> App<'a> {
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
 
                     // add log
+                    
                     self.app_state
-                        .result_log
-                        .push(String::from("A new connection string has been added."));
-                    self.log_view.update_log(&self.app_state);
+                        .log("A new connection string has been added.");
                 }
             }
             (_, _) => {}
