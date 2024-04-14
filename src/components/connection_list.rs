@@ -1,27 +1,22 @@
-use super::{centered_rect, MutableComponent};
+use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
     app::AppState,
     events::{key::Keys, EventState},
 };
-
+use std::collections::HashMap;
 use ratatui::{prelude::*, widgets::*};
+
 
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
     list_state: ListState,
-    buffer_input: Vec<Keys>,
 }
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
         ConnectionListComponent {
             list_state: ListState::default(),
-            buffer_input: Vec::new(),
         }
-    }
-
-    fn consume_buffer_input() {
-        // todo
     }
 }
 
@@ -62,7 +57,6 @@ impl MutableComponent for ConnectionListComponent {
                     }
                 }
                 Keys::Char('d') => {
-                    self.buffer_input.push(Keys::Char('d'));
                 }
                 _ => return Ok(EventState::Wasted),
             }
@@ -121,5 +115,15 @@ impl MutableComponent for ConnectionListComponent {
         }
 
         Ok(())
+    }
+}
+
+impl HelpContentText for ConnectionListComponent {
+    fn help_content_text() -> HashMap<&'static str, &'static str> {
+        HashMap::from([
+            ("i", "Insert a new database connection"),
+            ("d", "Delete the database connection"),
+            ("e", "Edit the database connection"),
+        ])
     }
 }

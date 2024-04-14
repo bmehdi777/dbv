@@ -102,13 +102,3 @@ impl MutableComponent for DatabaseListComponent {
         Ok(())
     }
 }
-
-impl HelpContentText for DatabaseListComponent {
-    fn help_content_text() -> std::collections::HashMap<&'static str, &'static str> {
-        HashMap::from([
-            ("i", "Insert a new database connection"),
-            ("dd", "Delete the database connection"),
-            ("e", "Edit the database connection"),
-        ])
-    }
-}

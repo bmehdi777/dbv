@@ -259,11 +259,9 @@ impl<'a> App<'a> {
                     self.app_state
                         .connection_list
                         .list
-                        .push(DatabaseConnection::new(content.clone()));
+                        .push(DatabaseConnection::new(content));
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
 
-                    // add log
-                    
                     self.app_state
                         .log("A new connection string has been added.");
                 }
@@ -349,7 +347,7 @@ impl<'a> App<'a> {
 
     fn help_view_text(selected_pane: (u8, u8)) -> Option<HashMap<&'static str, &'static str>> {
         match selected_pane {
-            (0, 0) => return Some(DatabaseListComponent::help_content_text()),
+            (0, 0) => return Some(ConnectionListComponent::help_content_text()),
             _ => return None,
         }
     }
