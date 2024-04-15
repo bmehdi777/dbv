@@ -1,9 +1,8 @@
-use super::{centered_rect, HelpContentText, MutableComponent};
+use super::{centered_rect, MutableComponent};
 use crate::{
     app::AppState,
     events::{key::Keys, EventState},
 };
-use std::collections::HashMap;
 
 use ratatui::{prelude::*, widgets::*};
 

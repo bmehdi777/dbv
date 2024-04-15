@@ -10,12 +10,14 @@ use ratatui::{prelude::*, widgets::*};
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
     list_state: ListState,
+    selected: isize,
 }
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
         ConnectionListComponent {
             list_state: ListState::default(),
+            selected: -1,
         }
     }
 }
@@ -57,6 +59,21 @@ impl MutableComponent for ConnectionListComponent {
                     }
                 }
                 Keys::Char('d') => {
+                    if let Some(index) = self.list_state.selected() {
+                        app_state.connection_list.list.remove(index);
+                        app_state.log("Connection string removed.");
+                    }
+                }
+                Keys::Enter => {
+                    if let Some(index) = self.list_state.selected() {
+
+                        if let Err(e) = app_state.connection_list.list[index].try_establish_connection() {
+                            app_state.error(&format!("{}", e));
+                            return Ok(EventState::Wasted);
+                        }
+
+                        self.selected = index as isize;
+                    }
                 }
                 _ => return Ok(EventState::Wasted),
             }
@@ -67,8 +84,8 @@ impl MutableComponent for ConnectionListComponent {
 
     fn draw(
         &mut self,
-        frame: &mut ratatui::prelude::Frame,
-        area: ratatui::prelude::Rect,
+        frame: &mut Frame,
+        area: Rect,
         selected: bool,
         app_state: &AppState,
     ) -> anyhow::Result<()> {
@@ -86,12 +103,21 @@ impl MutableComponent for ConnectionListComponent {
             } else {
                 0
             };
+
             let list = List::new(
-                app_state
+                 app_state
                     .connection_list
                     .list
                     .iter()
-                    .map(|item| item.connection_string.clone()),
+                    .enumerate()
+                    .map(|(index, item)| {
+                        if self.selected == index as isize {
+                            format!(" > {}", item.connection_string.clone())
+                        } else {
+                            item.connection_string.clone()
+                        }
+                    })
+
             )
             .block(container.title_bottom(format!(
                 "{} of {}",

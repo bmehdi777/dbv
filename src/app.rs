@@ -14,7 +14,7 @@ pub struct AppState {
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
 
-    log_contents: Vec<LogContent>
+    log_contents: Vec<LogContent>,
 }
 
 impl AppState {

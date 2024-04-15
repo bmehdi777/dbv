@@ -1,31 +1,53 @@
-use serde::{Deserialize, Serialize};
-use sqlx::{Pool, mysql::{MySql , MySqlPoolOptions}};
+use sqlx::{
+    any::{Any, AnyPoolOptions, AnyRow},
+    Pool,
+};
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::thread;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SqlThread {
+    TableRow(AnyRow),
+}
+
+#[derive(Debug)]
 pub struct DatabaseConnection {
     pub connection_string: String,
+    pool: Option<Pool<Any>>,
 }
 
 impl DatabaseConnection {
     pub fn new(connection_string: String) -> Self {
         DatabaseConnection {
             connection_string,
+            pool: None,
         }
     }
 
-    pub async fn try_connect(&self) -> Result<Pool<MySql>, sqlx::Error> {
-        MySqlPoolOptions::new().max_connections(5).connect(&self.connection_string).await
+    pub fn try_establish_connection(&mut self) -> Result<(), sqlx::Error> {
+        self.pool = Some(
+            AnyPoolOptions::new()
+                .max_connections(5)
+                .connect_lazy(&self.connection_string)?,
+        );
+
+        Ok(())
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct DatabaseConnectionList {
-    #[serde(flatten)]
     pub list: Vec<DatabaseConnection>,
+    tx: Sender<SqlThread>,
+    rx: Receiver<SqlThread>,
 }
 
 impl DatabaseConnectionList {
     pub fn new() -> Self {
-        DatabaseConnectionList { list: Vec::new() }
+        let (tx, rx) = channel::<SqlThread>();
+        DatabaseConnectionList {
+            list: Vec::new(),
+            tx,
+            rx,
+        }
     }
 }
