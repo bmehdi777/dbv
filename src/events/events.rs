@@ -35,10 +35,13 @@ impl EventsHandling {
                         // todo one day ?
                     }
                     _ => {
-                        etx.send(EventThread::Tick).expect("An error occured while sending tick.");
+                        etx.send(EventThread::Tick)
+                            .expect("An error occured while sending tick.");
                     }
                 }
             }
+            etx.send(EventThread::Tick)
+                .expect("An error occured while sending tick.");
         });
         self
     }

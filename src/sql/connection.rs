@@ -8,14 +8,14 @@ pub enum SqlThread {
 }
 
 #[derive(Debug)]
-pub struct DatabaseConnection {
+pub struct Connection {
     pub connection_string: String,
     pub pool: Option<Pool<Any>>,
 }
 
-impl DatabaseConnection {
+impl Connection {
     pub fn new(connection_string: String) -> Self {
-        DatabaseConnection {
+        Connection {
             connection_string,
             pool: None,
         }
@@ -30,15 +30,16 @@ impl DatabaseConnection {
 
         Ok(())
     }
+
 }
 
 #[derive(Debug)]
-pub struct DatabaseConnectionList {
-    pub list: Vec<DatabaseConnection>,
+pub struct ConnectionList {
+    pub list: Vec<Connection>,
 }
 
-impl DatabaseConnectionList {
+impl ConnectionList {
     pub fn new() -> Self {
-        DatabaseConnectionList { list: Vec::new() }
+        ConnectionList { list: Vec::new() }
     }
 }

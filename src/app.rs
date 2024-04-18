@@ -2,7 +2,7 @@ use super::{
     components::*,
     config::Config,
     events::{key::Keys, EventState},
-    sql::database::{DatabaseConnection, DatabaseConnectionList},
+    sql::connection::{Connection, ConnectionList},
 };
 use ratatui::{prelude::*, widgets::*, Frame};
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ pub enum AppStateAction {
 
 pub struct AppState {
     pub config: Config,
-    pub connection_list: DatabaseConnectionList,
+    pub connection_list: ConnectionList,
     pub exit: bool,
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
@@ -30,7 +30,7 @@ impl AppState {
         let (actions_tx, actions_rx) = unbounded_channel();
         AppState {
             config: Config::default().load(),
-            connection_list: DatabaseConnectionList::new(),
+            connection_list: ConnectionList::new(),
             exit: false,
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
@@ -282,7 +282,7 @@ impl<'a> App<'a> {
                     self.app_state
                         .connection_list
                         .list
-                        .push(DatabaseConnection::new(content));
+                        .push(Connection::new(content));
                     self.app_state.selected_pane = self.app_state.previous_selected_pane;
 
                     self.app_state
