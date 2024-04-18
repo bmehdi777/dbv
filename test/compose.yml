@@ -1,0 +1,12 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    volumes:
+      - mariadb:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+
+volumes:
+  mariadb:

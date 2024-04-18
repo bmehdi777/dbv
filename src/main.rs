@@ -22,6 +22,8 @@ async fn main() -> anyhow::Result<()> {
         .init()
         .expect("An error occured while initializing the config file.");
 
+    sqlx::any::install_default_drivers();
+
     set_logger(&app.app_state.config)?;
 
     loop {
@@ -47,6 +49,9 @@ async fn main() -> anyhow::Result<()> {
                 std::process::exit(1);
             }
         };
+
+        // update
+        app.app_state.update();
 
         if app.app_state.exit {
             break;

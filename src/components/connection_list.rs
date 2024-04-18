@@ -3,9 +3,9 @@ use crate::{
     app::AppState,
     events::{key::Keys, EventState},
 };
-use std::collections::HashMap;
 use ratatui::{prelude::*, widgets::*};
-
+use sqlx::Row;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
@@ -66,12 +66,25 @@ impl MutableComponent for ConnectionListComponent {
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
-
-                        if let Err(e) = app_state.connection_list.list[index].try_establish_connection() {
+                        let connection = &mut app_state.connection_list.list[index];
+                        if let Err(e) = connection.set_pool() {
                             app_state.error(&format!("{}", e));
                             return Ok(EventState::Wasted);
                         }
 
+                        let pool = connection.pool.as_ref().unwrap().clone();
+                        let actions_tx = app_state.actions_tx.clone();
+                        tokio::spawn(async move {
+                            let rows = sqlx::query("SHOW databases")
+                                .fetch_all(&pool)
+                                .await
+                                .unwrap();
+                            actions_tx.send(crate::app::AppStateAction::SendDatabaseData(
+                                rows.iter()
+                                    .map(|row| row.try_get("Database").unwrap())
+                                    .collect(),
+                            ))
+                        });
                         self.selected = index as isize;
                     }
                 }
@@ -104,21 +117,15 @@ impl MutableComponent for ConnectionListComponent {
                 0
             };
 
-            let list = List::new(
-                 app_state
-                    .connection_list
-                    .list
-                    .iter()
-                    .enumerate()
-                    .map(|(index, item)| {
-                        if self.selected == index as isize {
-                            format!(" > {}", item.connection_string.clone())
-                        } else {
-                            item.connection_string.clone()
-                        }
-                    })
-
-            )
+            let list = List::new(app_state.connection_list.list.iter().enumerate().map(
+                |(index, item)| {
+                    if self.selected == index as isize {
+                        format!(" > {}", item.connection_string.clone())
+                    } else {
+                        item.connection_string.clone()
+                    }
+                },
+            ))
             .block(container.title_bottom(format!(
                 "{} of {}",
                 selected_idx,

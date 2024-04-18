@@ -6,6 +6,11 @@ use super::{
 };
 use ratatui::{prelude::*, widgets::*, Frame};
 use std::collections::HashMap;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
+
+pub enum AppStateAction {
+    SendDatabaseData(Vec<String>),
+}
 
 pub struct AppState {
     pub config: Config,
@@ -15,10 +20,14 @@ pub struct AppState {
     pub previous_selected_pane: (u8, u8),
 
     log_contents: Vec<LogContent>,
+
+    pub actions_tx:  UnboundedSender<AppStateAction>,
+    actions_rx: UnboundedReceiver<AppStateAction>
 }
 
 impl AppState {
     pub fn new() -> Self {
+        let (actions_tx, actions_rx) = unbounded_channel();
         AppState {
             config: Config::default().load(),
             connection_list: DatabaseConnectionList::new(),
@@ -26,9 +35,23 @@ impl AppState {
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
             log_contents: Vec::new(),
+            actions_tx,
+            actions_rx,
         }
     }
 
+    pub fn update(&mut self) {
+        while let Ok(action) = self.actions_rx.try_recv() {
+            match action {
+                AppStateAction::SendDatabaseData(data) => {
+                    self.log(&format!("{:?}", data));
+                    self.selected_pane = (0,1);
+                }
+                _ => {}
+            }
+        }
+    }
+ 
     pub fn log(&mut self, content: &str) {
         self.log_contents.push(LogContent::Info(content.into()))
     }
