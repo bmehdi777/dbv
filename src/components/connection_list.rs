@@ -64,6 +64,9 @@ impl MutableComponent for ConnectionListComponent {
                         app_state.log("Connection string removed.");
                     }
                 }
+                Keys::Char('e') => {
+                    app_state.selected_pane = (101, 101);
+                }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
                         let connection = &mut app_state.connection_list.list[index];
@@ -73,6 +76,7 @@ impl MutableComponent for ConnectionListComponent {
                         }
 
                         let pool = connection.pool.as_ref().unwrap().clone();
+                        app_state.current_connection = Some(index);
                         let actions_tx = app_state.actions_tx.clone();
                         tokio::spawn(async move {
                             let rows = sqlx::query("SHOW databases")
@@ -83,7 +87,7 @@ impl MutableComponent for ConnectionListComponent {
                                 rows.iter()
                                     .map(|row| row.try_get("Database").unwrap())
                                     .collect(),
-                            ))
+                            )).unwrap();
                         });
                         self.selected = index as isize;
                     }

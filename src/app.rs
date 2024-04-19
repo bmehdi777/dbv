@@ -10,11 +10,15 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
 
 pub enum AppStateAction {
     SendDatabaseData(Vec<String>),
+    SendTablesData(Vec<String>),
 }
 
 pub struct AppState {
     pub config: Config,
+    pub current_connection: Option<usize>,
     pub connection_list: ConnectionList,
+    pub database_list: Vec<String>,
+    pub tables_list: Vec<String>,
     pub exit: bool,
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
@@ -30,7 +34,10 @@ impl AppState {
         let (actions_tx, actions_rx) = unbounded_channel();
         AppState {
             config: Config::default().load(),
+            current_connection: None,
             connection_list: ConnectionList::new(),
+            database_list: Vec::new(),
+            tables_list: Vec::new(),
             exit: false,
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
@@ -45,7 +52,13 @@ impl AppState {
             match action {
                 AppStateAction::SendDatabaseData(data) => {
                     self.log(&format!("{:?}", data));
+                    self.database_list = data;
                     self.selected_pane = (0,1);
+                }
+                AppStateAction::SendTablesData(data) => {
+                    self.log(&format!("{:?}", data));
+                    self.tables_list = data;
+                    self.selected_pane = (0,2);
                 }
                 _ => {}
             }
