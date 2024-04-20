@@ -12,7 +12,6 @@ pub enum StoreAction {
 
 pub struct Store {
     pub config: Config,
-    pub current_connection: Option<usize>,
     pub connection_list: ConnectionList,
     pub database_list: Vec<String>,
     pub tables_list: Vec<String>,
@@ -31,7 +30,6 @@ impl Store {
         let (actions_tx, actions_rx) = unbounded_channel();
         Store {
             config: Config::default().load(),
-            current_connection: None,
             connection_list: ConnectionList::new(),
             database_list: Vec::new(),
             tables_list: Vec::new(),

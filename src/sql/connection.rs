@@ -1,3 +1,4 @@
+use crate::application::{Store, StoreAction};
 use sqlx::{
     any::{Any, AnyPoolOptions, AnyRow},
     Pool,
@@ -30,16 +31,42 @@ impl Connection {
 
         Ok(())
     }
-
 }
 
 #[derive(Debug)]
 pub struct ConnectionList {
     pub list: Vec<Connection>,
+    current_connection: Option<usize>,
 }
 
 impl ConnectionList {
     pub fn new() -> Self {
-        ConnectionList { list: Vec::new() }
+        ConnectionList {
+            list: Vec::new(),
+            current_connection: None,
+        }
+    }
+
+    pub fn get_pool(&self) -> anyhow::Result<Pool<Any>> {
+        if let Some(i) = self.current_connection {
+            return Ok(self.list[i]
+                .pool
+                .as_ref()
+                .expect("An error occured while getting the pool.")
+                .clone());
+        }
+        Err(anyhow::anyhow!("No current connection is set."))
+    }
+
+    pub fn set_current_connection(&mut self, index: usize) -> Result<(), String> {
+        self.current_connection = Some(index);
+        if let Err(e) = self.list[index].set_pool() {
+            return Err(format!("{}", e));
+        }
+        Ok(())
+    }
+
+    pub fn reset_current_connection(&mut self) {
+        self.current_connection = None;
     }
 }

@@ -2,10 +2,10 @@ use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    sql::tables::Tables,
 };
 
 use ratatui::{prelude::*, widgets::*};
-use sqlx::Row;
 
 #[derive(Debug, Clone)]
 pub struct DatabaseListComponent {
@@ -48,31 +48,16 @@ impl MutableComponent for DatabaseListComponent {
                         };
                         self.list_state.select(Some(index));
                     } else {
-                        self.list_state
-                            .select(Some(store.database_list.len() - 1));
+                        self.list_state.select(Some(store.database_list.len() - 1));
                     }
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
                         let current_db = store.database_list[index].clone();
-                        let connection = &store.connection_list.list[store.current_connection.unwrap()];
-                        let pool = connection.pool.as_ref().unwrap().clone();
+                        let pool = store.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
-                        tokio::spawn(async move {
-                            let rows = sqlx::query(
-                                &format!("select table_name from information_schema.tables where table_schema='{}'",current_db)
-                            )
-                            .fetch_all(&pool)
-                            .await
-                            .unwrap();
-                            actions_tx
-                                .send(crate::application::StoreAction::SendTablesData(
-                                    rows.iter()
-                                        .map(|row| row.try_get("table_name").unwrap())
-                                        .collect(),
-                                ))
-                                .unwrap();
-                        });
+
+                        Tables::get_tables(pool, actions_tx, current_db);
                         self.selected = index as isize;
                     }
                 }
@@ -98,15 +83,13 @@ impl MutableComponent for DatabaseListComponent {
             .border_type(BorderType::Rounded);
 
         if store.database_list.len() > 0 {
-            let list = List::new(store.database_list.iter().enumerate().map(
-                |(index, item)| {
-                    if self.selected == index as isize {
-                        format!(" > {}", item.clone())
-                    } else {
-                        item.clone()
-                    }
-                },
-            ))
+            let list = List::new(store.database_list.iter().enumerate().map(|(index, item)| {
+                if self.selected == index as isize {
+                    format!(" > {}", item.clone())
+                } else {
+                    item.clone()
+                }
+            }))
             .block(container)
             .highlight_style(Style::default().fg(Color::LightGreen))
             .highlight_symbol(">>")

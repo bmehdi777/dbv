@@ -2,9 +2,9 @@ use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    sql::database::Database,
 };
 use ratatui::{prelude::*, widgets::*};
-use sqlx::Row;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -69,26 +69,13 @@ impl MutableComponent for ConnectionListComponent {
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
-                        let connection = &mut store.connection_list.list[index];
-                        if let Err(e) = connection.set_pool() {
-                            store.error(&format!("{}", e));
+                        if let Err(e) = &store.connection_list.set_current_connection(index) {
+                            store.error(e);
                             return Ok(EventState::Wasted);
                         }
-
-                        let pool = connection.pool.as_ref().unwrap().clone();
-                        store.current_connection = Some(index);
+                        let pool = store.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
-                        tokio::spawn(async move {
-                            let rows = sqlx::query("SHOW databases")
-                                .fetch_all(&pool)
-                                .await
-                                .unwrap();
-                            actions_tx.send(crate::application::StoreAction::SendDatabaseData(
-                                rows.iter()
-                                    .map(|row| row.try_get("Database").unwrap())
-                                    .collect(),
-                            )).unwrap();
-                        });
+                        Database::get_databases(pool, actions_tx);
                         self.selected = index as isize;
                     }
                 }
