@@ -111,7 +111,7 @@ impl MutableComponent for ConnectionListComponent {
             let list = List::new(store.connection_list.list.iter().enumerate().map(
                 |(index, item)| {
                     if self.selected == index as isize {
-                        format!(" > {}", item.connection_string.clone())
+                        format!(" * {}", item.connection_string.clone())
                     } else {
                         item.connection_string.clone()
                     }

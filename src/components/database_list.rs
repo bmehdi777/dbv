@@ -83,16 +83,26 @@ impl MutableComponent for DatabaseListComponent {
             .border_type(BorderType::Rounded);
 
         if store.database_list.len() > 0 {
+            let selected_idx = if let Some(index) = self.list_state.selected() {
+                index + 1
+            } else {
+                0
+            };
+
             let list = List::new(store.database_list.iter().enumerate().map(|(index, item)| {
                 if self.selected == index as isize {
-                    format!(" > {}", item.clone())
+                    format!(" * {}", item.clone())
                 } else {
                     item.clone()
                 }
             }))
-            .block(container)
-            .highlight_style(Style::default().fg(Color::LightGreen))
-            .highlight_symbol(">>")
+            .style(Style::default().fg(self.get_color(store.config.theme_config.unselected_color)))
+            .block(container.title_bottom(format!(
+                "{} of {}",
+                selected_idx,
+                store.database_list.len()
+            )))
+            .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 
             frame.render_stateful_widget(list, area, &mut self.list_state);
@@ -101,7 +111,7 @@ impl MutableComponent for DatabaseListComponent {
                 .style(Style::new().italic())
                 .centered();
 
-            frame.render_widget(container, area);
+            frame.render_widget(container.title_bottom("0 of 0"), area);
             frame.render_widget(no_data, centered_rect(area, 50, 20));
         }
 
