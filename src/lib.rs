@@ -1,4 +1,4 @@
-pub mod app;
+pub mod application;
 pub mod components;
 pub mod events;
 pub mod config; 

@@ -2,7 +2,7 @@ use anyhow::Result;
 use ratatui::{layout::Rect, prelude::*, Frame};
 
 use crate::{
-    app::AppState,
+    application::Store,
     config::ThemeConfig,
     events::{key::Keys, EventState},
 };
@@ -53,13 +53,13 @@ fn get_color(rgb: [u8; 3]) -> Color {
 }
 
 pub trait Component {
-    fn event(&self, input: &Keys, app_state: &AppState) -> Result<EventState>;
+    fn event(&self, input: &Keys, store: &Store) -> Result<EventState>;
     fn draw(
         &self,
         frame: &mut Frame,
         area: Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> Result<()>;
 
     fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {
@@ -71,13 +71,13 @@ pub trait Component {
 }
 
 pub trait MutableComponent {
-    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> Result<EventState>;
+    fn event(&mut self, input: &Keys, store: &mut Store) -> Result<EventState>;
     fn draw(
         &mut self,
         frame: &mut Frame,
         area: Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> Result<()>;
 
     fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {

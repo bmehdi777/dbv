@@ -1,6 +1,6 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -30,7 +30,7 @@ impl<'a> RecordsViewComponent<'a> {
 }
 
 impl<'a> MutableComponent for RecordsViewComponent<'a> {
-    fn event(&mut self, _input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, _input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
         Ok(EventState::Wasted)
     }
 
@@ -39,12 +39,12 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
         frame: &mut Frame,
         area: Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             )
             .border_type(BorderType::Rounded);
 

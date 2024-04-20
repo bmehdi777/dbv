@@ -1,6 +1,6 @@
 use super::MutableComponent;
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -24,14 +24,14 @@ impl InputPopupComponent {
 }
 
 impl MutableComponent for InputPopupComponent {
-    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::Backspace => {
                 self.content.pop();
             }
             Keys::Enter => {
                 if self.content.trim().len() == 0 {
-                    app_state.selected_pane = app_state.previous_selected_pane;
+                    store.selected_pane = store.previous_selected_pane;
                     return Ok(EventState::Escaped);
                 }
                 let event = Ok(EventState::ConfirmedText(self.content.clone()));
@@ -42,7 +42,7 @@ impl MutableComponent for InputPopupComponent {
                 self.content.push_str(&c.to_string());
             }
             Keys::Esc => {
-                app_state.selected_pane = app_state.previous_selected_pane;
+                store.selected_pane = store.previous_selected_pane;
             }
             _ => return Ok(EventState::Wasted),
         }
@@ -53,20 +53,20 @@ impl MutableComponent for InputPopupComponent {
         frame: &mut Frame,
         area: Rect,
         _selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title(&*self.title)
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.get_color(app_state.config.theme_config.selected_color)),
+                Style::default().fg(self.get_color(store.config.theme_config.selected_color)),
             )
             .padding(Padding::left(1))
             .border_type(BorderType::Rounded);
 
         let text = Paragraph::new(&*self.content)
             .block(container)
-            .style(Style::new().fg(self.get_color(app_state.config.theme_config.unselected_color)));
+            .style(Style::new().fg(self.get_color(store.config.theme_config.unselected_color)));
 
         frame.render_widget(Clear, area);
         frame.set_cursor(area.x + 2 + self.content.len() as u16, area.y + 1);

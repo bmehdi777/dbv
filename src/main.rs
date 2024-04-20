@@ -5,7 +5,7 @@ use crossterm::{
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use std::io::{stdout, Result};
 
-use dbv::{app::App, events::events::*, log::set_logger};
+use dbv::{application::App, events::events::*, log::set_logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,14 +17,14 @@ async fn main() -> anyhow::Result<()> {
     let mut app = App::new();
     let events_handling = EventsHandling::new().start();
 
-    app.app_state
+    app.store
         .config
         .init()
         .expect("An error occured while initializing the config file.");
 
     sqlx::any::install_default_drivers();
 
-    set_logger(&app.app_state.config)?;
+    set_logger(&app.store.config)?;
 
     loop {
         // draw
@@ -51,9 +51,9 @@ async fn main() -> anyhow::Result<()> {
         };
 
         // update
-        app.app_state.update();
+        app.store.update();
 
-        if app.app_state.exit {
+        if app.store.exit {
             break;
         }
     }

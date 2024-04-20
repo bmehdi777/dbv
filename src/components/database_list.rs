@@ -1,6 +1,6 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -23,12 +23,12 @@ impl DatabaseListComponent {
 }
 
 impl MutableComponent for DatabaseListComponent {
-    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
-        if app_state.database_list.len() > 0 {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
+        if store.database_list.len() > 0 {
             match input {
                 Keys::Char('j') => {
                     if let Some(i) = self.list_state.selected() {
-                        let index = if i == app_state.database_list.len() - 1 {
+                        let index = if i == store.database_list.len() - 1 {
                             0
                         } else {
                             i + 1
@@ -42,22 +42,22 @@ impl MutableComponent for DatabaseListComponent {
                 Keys::Char('k') => {
                     if let Some(i) = self.list_state.selected() {
                         let index = if i == 0 {
-                            app_state.database_list.len() - 1
+                            store.database_list.len() - 1
                         } else {
                             i - 1
                         };
                         self.list_state.select(Some(index));
                     } else {
                         self.list_state
-                            .select(Some(app_state.database_list.len() - 1));
+                            .select(Some(store.database_list.len() - 1));
                     }
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
-                        let current_db = app_state.database_list[index].clone();
-                        let connection = &app_state.connection_list.list[app_state.current_connection.unwrap()];
+                        let current_db = store.database_list[index].clone();
+                        let connection = &store.connection_list.list[store.current_connection.unwrap()];
                         let pool = connection.pool.as_ref().unwrap().clone();
-                        let actions_tx = app_state.actions_tx.clone();
+                        let actions_tx = store.actions_tx.clone();
                         tokio::spawn(async move {
                             let rows = sqlx::query(
                                 &format!("select table_name from information_schema.tables where table_schema='{}'",current_db)
@@ -66,7 +66,7 @@ impl MutableComponent for DatabaseListComponent {
                             .await
                             .unwrap();
                             actions_tx
-                                .send(crate::app::AppStateAction::SendTablesData(
+                                .send(crate::application::StoreAction::SendTablesData(
                                     rows.iter()
                                         .map(|row| row.try_get("table_name").unwrap())
                                         .collect(),
@@ -87,18 +87,18 @@ impl MutableComponent for DatabaseListComponent {
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Databases")
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             )
             .border_type(BorderType::Rounded);
 
-        if app_state.database_list.len() > 0 {
-            let list = List::new(app_state.database_list.iter().enumerate().map(
+        if store.database_list.len() > 0 {
+            let list = List::new(store.database_list.iter().enumerate().map(
                 |(index, item)| {
                     if self.selected == index as isize {
                         format!(" > {}", item.clone())

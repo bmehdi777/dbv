@@ -1,6 +1,6 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -32,7 +32,7 @@ impl TableListComponent {
 }
 
 impl MutableComponent for TableListComponent {
-    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
         log::info!("New input in TableListComponent");
         if self.table_items.len() > 0 {
             match input {
@@ -72,13 +72,13 @@ impl MutableComponent for TableListComponent {
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Tables")
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             )
             .border_type(BorderType::Rounded);
 

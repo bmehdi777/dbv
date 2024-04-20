@@ -1,6 +1,6 @@
 use super::MutableComponent;
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -34,7 +34,7 @@ impl TabComponent {
 }
 
 impl MutableComponent for TabComponent {
-    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('l') | Keys::ArrowRight => {
                 if self.selected_tab == self.tabs.len() - 1 {
@@ -63,12 +63,12 @@ impl MutableComponent for TabComponent {
         frame: &mut Frame,
         area: Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             )
             .border_type(BorderType::Rounded);
 

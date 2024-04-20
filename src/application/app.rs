@@ -1,86 +1,11 @@
-use super::{
+use super::Store;
+use crate::{
     components::*,
-    config::Config,
     events::{key::Keys, EventState},
-    sql::connection::{Connection, ConnectionList},
+    sql::connection::Connection,
 };
 use ratatui::{prelude::*, widgets::*, Frame};
 use std::collections::HashMap;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
-
-pub enum AppStateAction {
-    SendDatabaseData(Vec<String>),
-    SendTablesData(Vec<String>),
-}
-
-pub struct AppState {
-    pub config: Config,
-    pub current_connection: Option<usize>,
-    pub connection_list: ConnectionList,
-    pub database_list: Vec<String>,
-    pub tables_list: Vec<String>,
-    pub exit: bool,
-    pub selected_pane: (u8, u8), //x,y
-    pub previous_selected_pane: (u8, u8),
-
-    log_contents: Vec<LogContent>,
-
-    pub actions_tx:  UnboundedSender<AppStateAction>,
-    actions_rx: UnboundedReceiver<AppStateAction>
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        let (actions_tx, actions_rx) = unbounded_channel();
-        AppState {
-            config: Config::default().load(),
-            current_connection: None,
-            connection_list: ConnectionList::new(),
-            database_list: Vec::new(),
-            tables_list: Vec::new(),
-            exit: false,
-            selected_pane: (0, 0),
-            previous_selected_pane: (0, 0),
-            log_contents: Vec::new(),
-            actions_tx,
-            actions_rx,
-        }
-    }
-
-    pub fn update(&mut self) {
-        while let Ok(action) = self.actions_rx.try_recv() {
-            match action {
-                AppStateAction::SendDatabaseData(data) => {
-                    self.log(&format!("{:?}", data));
-                    self.database_list = data;
-                    self.selected_pane = (0,1);
-                }
-                AppStateAction::SendTablesData(data) => {
-                    self.log(&format!("{:?}", data));
-                    self.tables_list = data;
-                    self.selected_pane = (0,2);
-                }
-                _ => {}
-            }
-        }
-    }
- 
-    pub fn log(&mut self, content: &str) {
-        self.log_contents.push(LogContent::Info(content.into()))
-    }
-    pub fn success(&mut self, content: &str) {
-        self.log_contents.push(LogContent::Success(content.into()))
-    }
-    pub fn error(&mut self, content: &str) {
-        self.log_contents.push(LogContent::Error(content.into()))
-    }
-    pub fn debug(&mut self, content: &str) {
-        self.log_contents.push(LogContent::Debug(content.into()))
-    }
-    pub fn log_contents(&self) -> &Vec<LogContent> {
-        &self.log_contents
-    }
-} 
 
 pub struct App<'a> {
     tab: TabComponent,
@@ -96,7 +21,7 @@ pub struct App<'a> {
     popup: InputPopupComponent,
 
     max_pane_column: [u8; 2],
-    pub app_state: AppState,
+    pub store: Store,
 }
 
 impl<'a> App<'a> {
@@ -113,7 +38,7 @@ impl<'a> App<'a> {
         let log_view = LogViewComponent::new();
         let popup = InputPopupComponent::default();
 
-        let app_state = AppState::new();
+        let store = Store::new();
         App {
             tab,
             connection_list,
@@ -130,7 +55,7 @@ impl<'a> App<'a> {
             popup,
 
             max_pane_column: [3, 3],
-            app_state,
+            store,
         }
     }
     pub fn draw(&mut self, frame: &mut Frame) -> anyhow::Result<()> {
@@ -140,19 +65,16 @@ impl<'a> App<'a> {
         }
 
         let select_connection_list =
-            self.app_state.selected_pane.0 == 0 && self.app_state.selected_pane.1 == 0;
+            self.store.selected_pane.0 == 0 && self.store.selected_pane.1 == 0;
         let select_database_list =
-            self.app_state.selected_pane.0 == 0 && self.app_state.selected_pane.1 == 1;
-        let select_table_list =
-            self.app_state.selected_pane.0 == 0 && self.app_state.selected_pane.1 == 2;
+            self.store.selected_pane.0 == 0 && self.store.selected_pane.1 == 1;
+        let select_table_list = self.store.selected_pane.0 == 0 && self.store.selected_pane.1 == 2;
 
-        let select_tab = self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 0;
+        let select_tab = self.store.selected_pane.0 == 1 && self.store.selected_pane.1 == 0;
         let select_records_view =
-            self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 1;
-        let select_log_view =
-            self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 2;
-        let select_command =
-            self.app_state.selected_pane.0 == 1 && self.app_state.selected_pane.1 == 3;
+            self.store.selected_pane.0 == 1 && self.store.selected_pane.1 == 1;
+        let select_log_view = self.store.selected_pane.0 == 1 && self.store.selected_pane.1 == 2;
+        let select_command = self.store.selected_pane.0 == 1 && self.store.selected_pane.1 == 3;
 
         let main_area = Layout::default()
             .direction(Direction::Vertical)
@@ -183,31 +105,31 @@ impl<'a> App<'a> {
             .split(sub_main_area[1]);
 
         self.connection_list
-            .draw(frame, left_area[0], select_connection_list, &self.app_state)?;
+            .draw(frame, left_area[0], select_connection_list, &self.store)?;
         self.database_list
-            .draw(frame, left_area[1], select_database_list, &self.app_state)?;
+            .draw(frame, left_area[1], select_database_list, &self.store)?;
         self.table_list
-            .draw(frame, left_area[2], select_table_list, &self.app_state)?;
+            .draw(frame, left_area[2], select_table_list, &self.store)?;
 
         self.tab
-            .draw(frame, right_area[0], select_tab, &self.app_state)?;
+            .draw(frame, right_area[0], select_tab, &self.store)?;
         self.records_view
-            .draw(frame, right_area[1], select_records_view, &self.app_state)?;
+            .draw(frame, right_area[1], select_records_view, &self.store)?;
         self.log_view
-            .draw(frame, right_area[2], select_log_view, &self.app_state)?;
+            .draw(frame, right_area[2], select_log_view, &self.store)?;
         self.command
-            .draw(frame, right_area[3], select_command, &self.app_state)?;
+            .draw(frame, right_area[3], select_command, &self.store)?;
 
         self.help_text
-            .draw(frame, main_area[1], false, &self.app_state)?;
+            .draw(frame, main_area[1], false, &self.store)?;
 
-        match self.app_state.selected_pane {
+        match self.store.selected_pane {
             (100, 100) => {
                 self.help_view.draw(
                     frame,
                     centered_rect(main_area[0], 25, 50),
                     true,
-                    &self.app_state,
+                    &self.store,
                 )?;
             }
             (101, 101) => {
@@ -215,12 +137,8 @@ impl<'a> App<'a> {
                     self.popup =
                         InputPopupComponent::new(String::from("Connection string"), String::new());
                 }
-                self.popup.draw(
-                    frame,
-                    centered_rect(main_area[0], 40, 5),
-                    true,
-                    &self.app_state,
-                )?;
+                self.popup
+                    .draw(frame, centered_rect(main_area[0], 40, 5), true, &self.store)?;
             }
             _ => {}
         }
@@ -230,76 +148,75 @@ impl<'a> App<'a> {
 
     pub fn event_handling(&mut self, k: Keys) -> anyhow::Result<()> {
         self.event(&k)?;
-        match self.app_state.selected_pane {
+        match self.store.selected_pane {
             (0, 0) => {
                 if self.help_view.id != 0 {
                     self.help_view = HelpViewComponent::new(
                         0,
                         "Connection list".into(),
-                        App::help_view_text(self.app_state.selected_pane),
+                        App::help_view_text(self.store.selected_pane),
                     );
                 }
-                self.connection_list.event(&k, &mut self.app_state)?;
+                self.connection_list.event(&k, &mut self.store)?;
             }
             (0, 1) => {
                 if self.help_view.id != 1 {
                     self.help_view = HelpViewComponent::new(
                         1,
                         "Database list".into(),
-                        App::help_view_text(self.app_state.selected_pane),
+                        App::help_view_text(self.store.selected_pane),
                     );
                 }
-                self.database_list.event(&k, &mut self.app_state)?;
+                self.database_list.event(&k, &mut self.store)?;
             }
             (0, 2) => {
                 if self.help_view.id != 2 {
                     self.help_view = HelpViewComponent::new(
                         2,
                         "Table list".into(),
-                        App::help_view_text(self.app_state.selected_pane),
+                        App::help_view_text(self.store.selected_pane),
                     );
                 }
-                self.table_list.event(&k, &mut self.app_state)?;
+                self.table_list.event(&k, &mut self.store)?;
             }
             (1, 0) => {
-                self.tab.event(&k, &mut self.app_state)?;
+                self.tab.event(&k, &mut self.store)?;
                 self.help_view = HelpViewComponent::new(
                     3,
                     "Tab".into(),
-                    App::help_view_text(self.app_state.selected_pane),
+                    App::help_view_text(self.store.selected_pane),
                 );
             }
-            (1,2) => {
-                self.log_view.event(&k, &mut self.app_state)?;
+            (1, 2) => {
+                self.log_view.event(&k, &mut self.store)?;
             }
             (1, 3) => {
                 if self.help_view.id != 4 {
                     self.help_view = HelpViewComponent::new(
                         4,
                         "Command".into(),
-                        App::help_view_text(self.app_state.selected_pane),
+                        App::help_view_text(self.store.selected_pane),
                     );
                 }
-                let event = self.command.event(&k, &mut self.app_state)?;
+                let event = self.command.event(&k, &mut self.store)?;
                 if let EventState::ConfirmedText(content) = event {
                     // todo
-                    self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                    self.store.selected_pane = self.store.previous_selected_pane;
                 }
             }
             (100, 100) => {
-                self.help_view.event(&k, &mut self.app_state)?;
+                self.help_view.event(&k, &mut self.store)?;
             }
             (101, 101) => {
-                let event = self.popup.event(&k, &mut self.app_state)?;
+                let event = self.popup.event(&k, &mut self.store)?;
                 if let EventState::ConfirmedText(content) = event {
-                    self.app_state
+                    self.store
                         .connection_list
                         .list
                         .push(Connection::new(content));
-                    self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                    self.store.selected_pane = self.store.previous_selected_pane;
 
-                    self.app_state
-                        .log("A new connection string has been added.");
+                    self.store.log("A new connection string has been added.");
                 }
             }
             (_, _) => {}
@@ -308,39 +225,39 @@ impl<'a> App<'a> {
     }
 
     fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
-        if self.app_state.selected_pane != (101, 101) && self.app_state.selected_pane != (1, 3) {
+        if self.store.selected_pane != (101, 101) && self.store.selected_pane != (1, 3) {
             match input {
                 Keys::CtrlChar('j') => {
-                    let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
-                    if self.app_state.selected_pane.1 == max_pane - 1 {
-                        self.app_state.selected_pane.1 = 0;
+                    let max_pane = self.max_pane_column[self.store.selected_pane.0 as usize];
+                    if self.store.selected_pane.1 == max_pane - 1 {
+                        self.store.selected_pane.1 = 0;
                     } else {
-                        self.app_state.selected_pane.1 += 1;
+                        self.store.selected_pane.1 += 1;
                     }
                 }
                 Keys::CtrlChar('k') => {
-                    let max_pane = self.max_pane_column[self.app_state.selected_pane.0 as usize];
-                    if self.app_state.selected_pane.1 == 0 {
-                        self.app_state.selected_pane.1 = max_pane - 1;
+                    let max_pane = self.max_pane_column[self.store.selected_pane.0 as usize];
+                    if self.store.selected_pane.1 == 0 {
+                        self.store.selected_pane.1 = max_pane - 1;
                     } else {
-                        self.app_state.selected_pane.1 -= 1;
+                        self.store.selected_pane.1 -= 1;
                     }
                 }
                 Keys::CtrlChar('l') => {
-                    if self.app_state.selected_pane.1 >= 3 {
-                        self.app_state.selected_pane.1 = 1;
+                    if self.store.selected_pane.1 >= 3 {
+                        self.store.selected_pane.1 = 1;
                     }
-                    self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 1 {
+                    self.store.selected_pane.0 = if self.store.selected_pane.0 == 1 {
                         0
                     } else {
                         1
                     };
                 }
                 Keys::CtrlChar('h') => {
-                    if self.app_state.selected_pane.1 >= 3 {
-                        self.app_state.selected_pane.1 = 1;
+                    if self.store.selected_pane.1 >= 3 {
+                        self.store.selected_pane.1 = 1;
                     }
-                    self.app_state.selected_pane.0 = if self.app_state.selected_pane.0 == 0 {
+                    self.store.selected_pane.0 = if self.store.selected_pane.0 == 0 {
                         1
                     } else {
                         0
@@ -348,32 +265,31 @@ impl<'a> App<'a> {
                 }
                 Keys::Char('q') => {
                     // don't quit if we are in command or popup pane
-                    if self.app_state.selected_pane == (1, 3)
-                        || self.app_state.selected_pane == (101, 101)
+                    if self.store.selected_pane == (1, 3) || self.store.selected_pane == (101, 101)
                     {
                         return Ok(EventState::Wasted);
                     }
 
-                    if self.app_state.selected_pane == (100, 100) {
-                        self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                    if self.store.selected_pane == (100, 100) {
+                        self.store.selected_pane = self.store.previous_selected_pane;
                         return Ok(EventState::Consumed);
                     }
 
-                    self.app_state.exit = true;
+                    self.store.exit = true;
                 }
                 Keys::Esc => {
-                    if self.app_state.selected_pane == (100, 100) {
-                        self.app_state.selected_pane = self.app_state.previous_selected_pane;
+                    if self.store.selected_pane == (100, 100) {
+                        self.store.selected_pane = self.store.previous_selected_pane;
                         return Ok(EventState::Consumed);
                     }
                 }
                 Keys::Char('?') => {
-                    self.app_state.previous_selected_pane = self.app_state.selected_pane;
-                    self.app_state.selected_pane = (100, 100);
+                    self.store.previous_selected_pane = self.store.selected_pane;
+                    self.store.selected_pane = (100, 100);
                 }
                 Keys::Char(':') => {
-                    self.app_state.previous_selected_pane = self.app_state.selected_pane;
-                    self.app_state.selected_pane = (1, 3);
+                    self.store.previous_selected_pane = self.store.selected_pane;
+                    self.store.selected_pane = (1, 3);
                 }
                 _ => return Ok(EventState::Wasted),
             }
@@ -392,9 +308,9 @@ impl<'a> App<'a> {
         let size = frame.size();
         if size.width <= 50 || size.height <= 21 {
             let color = Color::Rgb(
-                self.app_state.config.theme_config.unselected_color[0],
-                self.app_state.config.theme_config.unselected_color[1],
-                self.app_state.config.theme_config.unselected_color[2],
+                self.store.config.theme_config.unselected_color[0],
+                self.store.config.theme_config.unselected_color[1],
+                self.store.config.theme_config.unselected_color[2],
             );
             let not_enough_space = Paragraph::default().block(
                 Block::default()

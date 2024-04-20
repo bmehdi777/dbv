@@ -1,6 +1,6 @@
 use super::MutableComponent;
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -45,7 +45,7 @@ impl HelpViewComponent {
 }
 
 impl MutableComponent for HelpViewComponent {
-    fn event(&mut self, input: &Keys, _app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.tablestate.selected() {
@@ -87,14 +87,14 @@ impl MutableComponent for HelpViewComponent {
         frame: &mut Frame,
         area: Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title(format!("Help - {}", self.title))
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             );
 
         let table = Table::new(
@@ -104,11 +104,11 @@ impl MutableComponent for HelpViewComponent {
                     Row::new(vec![
                         Cell::from(*key).style(
                             Style::default()
-                                .fg(self.get_color(app_state.config.theme_config.help_key_color)),
+                                .fg(self.get_color(store.config.theme_config.help_key_color)),
                         ),
                         Cell::from(*value).style(
                             Style::default()
-                                .fg(self.get_color(app_state.config.theme_config.help_desc_color))
+                                .fg(self.get_color(store.config.theme_config.help_desc_color))
                                 .italic(),
                         ),
                     ])

@@ -1,6 +1,6 @@
 use super::Component;
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -15,7 +15,7 @@ impl HelpTextComponent {
 }
 
 impl Component for HelpTextComponent {
-    fn event(&self, _input: &Keys, _app_state: &AppState) -> anyhow::Result<EventState> {
+    fn event(&self, _input: &Keys, _store: &Store) -> anyhow::Result<EventState> {
         Ok(EventState::Wasted)
     }
     fn draw(
@@ -23,9 +23,9 @@ impl Component for HelpTextComponent {
         frame: &mut Frame,
         area: Rect,
         _selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
-        let color_text = app_state.config.theme_config.help_text_color;
+        let color_text = store.config.theme_config.help_text_color;
         let help_text = Paragraph::new("<C-h>: Move left, <C-j>: Move down, <C-k>: Move up, <C-l>: Move right, q: Quit, ?: Help")
             .style(Style::default().fg(Color::Rgb(color_text[0], color_text[1], color_text[2])));
 

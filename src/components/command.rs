@@ -1,6 +1,6 @@
 use super::MutableComponent;
 use crate::{
-    app::AppState,
+    application::Store,
     events::{key::Keys, EventState},
 };
 
@@ -19,7 +19,7 @@ impl CommandComponent {
 }
 
 impl MutableComponent for CommandComponent {
-    fn event(&mut self, input: &Keys, app_state: &mut AppState) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::Backspace => {
                 self.text_input.pop();
@@ -34,7 +34,7 @@ impl MutableComponent for CommandComponent {
             }
             Keys::Esc => {
                 self.text_input = String::new();
-                app_state.selected_pane = app_state.previous_selected_pane;
+                store.selected_pane = store.previous_selected_pane;
             }
             _ => return Ok(EventState::Wasted),
         }
@@ -46,13 +46,13 @@ impl MutableComponent for CommandComponent {
         frame: &mut ratatui::prelude::Frame,
         area: ratatui::prelude::Rect,
         selected: bool,
-        app_state: &AppState,
+        store: &Store,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Command")
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, app_state.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
             )
             .padding(Padding::left(1))
             .border_type(BorderType::Rounded);
