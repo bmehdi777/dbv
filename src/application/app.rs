@@ -300,6 +300,7 @@ impl<'a> App<'a> {
     fn help_view_text(selected_pane: (u8, u8)) -> Option<HashMap<&'static str, &'static str>> {
         match selected_pane {
             (0, 0) => return Some(ConnectionListComponent::help_content_text()),
+            (0,1) => return Some(DatabaseListComponent::help_content_text()),
             _ => return None,
         }
     }

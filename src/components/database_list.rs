@@ -1,9 +1,10 @@
-use super::{centered_rect, MutableComponent};
+use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
-    sql::tables::Tables,
+    sql::{tables::Tables, database::Database},
 };
+use std::collections::HashMap;
 
 use ratatui::{prelude::*, widgets::*};
 
@@ -50,6 +51,11 @@ impl MutableComponent for DatabaseListComponent {
                     } else {
                         self.list_state.select(Some(store.database_list.len() - 1));
                     }
+                }
+                Keys::Char('r') => {
+                        let pool = store.connection_list.get_pool().unwrap();
+                        let actions_tx = store.actions_tx.clone();
+                        Database::get_databases(pool, actions_tx);
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
@@ -116,5 +122,14 @@ impl MutableComponent for DatabaseListComponent {
         }
 
         Ok(())
+    }
+}
+
+
+impl HelpContentText for DatabaseListComponent {
+    fn help_content_text() -> HashMap<&'static str, &'static str> {
+        HashMap::from([
+            ("r", "Reload the database's list"),
+        ])
     }
 }
