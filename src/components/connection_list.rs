@@ -1,8 +1,9 @@
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
-    application::{Store, StoreAction},
+    application::Store,
+    components::{HelpViewComponent, InputAction, InputPopupComponent, LayoutArea},
     events::{key::Keys, EventState},
-    sql::database::Database,
+    sql::{connection::Connection, database::Database},
 };
 use ratatui::{prelude::*, widgets::*};
 use std::collections::HashMap;
@@ -10,21 +11,49 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
     list_state: ListState,
+    popup: Option<InputPopupComponent>,
 }
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
         ConnectionListComponent {
             list_state: ListState::default(),
+            popup: None,
         }
     }
 }
 
 impl MutableComponent for ConnectionListComponent {
     fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
+        if let Some(popup) = &mut self.popup {
+            let event = popup.event(&input, store)?;
+            if let EventState::ConfirmedText(content) = event {
+                match popup.action {
+                    InputAction::Insert => {
+                        store.connection_list.list.push(Connection::new(content));
+                    }
+                    InputAction::Edit => {
+                        store.connection_list.list[self.list_state.selected().unwrap()]
+                            .connection_string = content;
+                    }
+                }
+                self.popup = None;
+                store.is_lock = false;
+            }
+            return Ok(EventState::Consumed);
+        }
+
         match input {
             Keys::Char('i') => {
-                store.selected_pane = (101, 101);
+                store.is_lock = true;
+                self.popup = Some(InputPopupComponent::new(
+                    String::from("Connection string"),
+                    String::new(),
+                    InputAction::Insert,
+                ));
+            }
+            Keys::Char('?') => {
+                store.selected_pane = (100, 100);
             }
             _ => {}
         }
@@ -63,7 +92,18 @@ impl MutableComponent for ConnectionListComponent {
                     }
                 }
                 Keys::Char('e') => {
-                    store.selected_pane = (101, 101);
+                    let index = if let Some(i) = self.list_state.selected() {
+                        i
+                    } else {
+                        return Ok(EventState::Consumed);
+                    };
+                    store.is_lock = true;
+                    self.popup = Some(InputPopupComponent::new(
+                        String::from("Connection string"),
+                        store.connection_list.list[index].connection_string.clone(),
+                        InputAction::Edit,
+                    ));
+                    store.connection_list.reset_current_connection();
                 }
                 Keys::Enter => {
                     store.log("Trying to connect to the database...");
@@ -91,7 +131,22 @@ impl MutableComponent for ConnectionListComponent {
         area: Rect,
         selected: bool,
         store: &Store,
+        layout: &LayoutArea,
     ) -> anyhow::Result<()> {
+        if let Some(popup) = &mut self.popup {
+            if selected {
+                popup.draw(
+                    frame,
+                    centered_rect(layout.main_area[0], 40, 5),
+                    true,
+                    store,
+                    layout,
+                )?;
+            } else {
+                self.popup = None;
+            }
+        }
+
         let container = Block::default()
             .title("Connections")
             .borders(Borders::ALL)

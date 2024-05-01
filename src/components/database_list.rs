@@ -3,6 +3,7 @@ use crate::{
     application::Store,
     events::{key::Keys, EventState},
     sql::{tables::Tables, database::Database},
+    components::LayoutArea
 };
 use std::collections::HashMap;
 
@@ -79,6 +80,7 @@ impl MutableComponent for DatabaseListComponent {
         area: ratatui::prelude::Rect,
         selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Databases")

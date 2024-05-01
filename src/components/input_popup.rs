@@ -2,23 +2,33 @@ use super::MutableComponent;
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
 
+#[derive(Debug, Clone)]
+pub enum InputAction {
+    Insert,
+    Edit,
+}
+
+#[derive(Debug, Clone)]
 pub struct InputPopupComponent {
     pub title: String,
     pub content: String,
+    pub action: InputAction,
 }
 
 impl InputPopupComponent {
-    pub fn new(title: String, content: String) -> Self {
-        InputPopupComponent { title, content }
+    pub fn new(title: String, content: String, action: InputAction) -> Self {
+        InputPopupComponent { title, content, action }
     }
     pub fn default() -> Self {
         InputPopupComponent {
             title: String::new(),
             content: String::new(),
+            action: InputAction::Insert
         }
     }
 }
@@ -42,7 +52,7 @@ impl MutableComponent for InputPopupComponent {
                 self.content.push_str(&c.to_string());
             }
             Keys::Esc => {
-                store.selected_pane = store.previous_selected_pane;
+                return Ok(EventState::Escaped);
             }
             _ => return Ok(EventState::Wasted),
         }
@@ -54,6 +64,7 @@ impl MutableComponent for InputPopupComponent {
         area: Rect,
         _selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title(&*self.title)

@@ -2,6 +2,7 @@ use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -73,6 +74,7 @@ impl MutableComponent for TableListComponent {
         area: ratatui::prelude::Rect,
         selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Tables")

@@ -16,6 +16,7 @@ pub mod log_view;
 pub mod tab;
 pub mod table_list;
 pub mod input_popup;
+pub mod layout;
 
 pub mod command;
 
@@ -30,6 +31,8 @@ pub use log_view::LogContent;
 pub use tab::TabComponent;
 pub use table_list::TableListComponent;
 pub use input_popup::InputPopupComponent;
+pub use input_popup::InputAction;
+pub use layout::LayoutArea;
 
 pub use help_view::HelpContentText;
 
@@ -70,7 +73,6 @@ pub trait Component {
     }
 }
 
-
 pub trait MutableComponent {
     fn event(&mut self, input: &Keys, store: &mut Store) -> Result<EventState>;
     fn draw(
@@ -79,6 +81,7 @@ pub trait MutableComponent {
         area: Rect,
         selected: bool,
         store: &Store,
+        layout: &LayoutArea
     ) -> Result<()>;
 
     fn selected_color(&self, selected: bool, theme_config: ThemeConfig) -> Color {

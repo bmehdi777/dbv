@@ -6,6 +6,8 @@ pub enum StoreAction {
     SendDatabaseData(Vec<String>),
     SendTablesData(Vec<String>),
 
+    SendEditConnectionItem(usize),
+
     SendError(String),
 }
 
@@ -17,6 +19,7 @@ pub struct Store {
     pub exit: bool,
     pub selected_pane: (u8, u8), //x,y
     pub previous_selected_pane: (u8, u8),
+    pub is_lock: bool,
 
     log_contents: Vec<LogContent>,
 
@@ -35,6 +38,7 @@ impl Store {
             exit: false,
             selected_pane: (0, 0),
             previous_selected_pane: (0, 0),
+            is_lock: false,
             log_contents: Vec::new(),
             actions_tx,
             actions_rx,
@@ -55,6 +59,7 @@ impl Store {
                     self.tables_list = data;
                     self.selected_pane = (0, 2);
                 }
+
                 StoreAction::SendError(e) => {
                     self.error(&format!("{:?}", e));
                     self.connection_list.current_connection = None;

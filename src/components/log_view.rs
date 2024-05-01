@@ -2,6 +2,7 @@ use super::MutableComponent;
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -108,6 +109,7 @@ impl MutableComponent for LogViewComponent {
         area: Rect,
         selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Log")

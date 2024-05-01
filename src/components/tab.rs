@@ -1,6 +1,7 @@
 use super::MutableComponent;
 use crate::{
     application::Store,
+    components::LayoutArea,
     events::{key::Keys, EventState},
 };
 
@@ -64,6 +65,7 @@ impl MutableComponent for TabComponent {
         area: Rect,
         selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)

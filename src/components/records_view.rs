@@ -2,6 +2,7 @@ use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
     events::{key::Keys, EventState},
+    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -40,6 +41,7 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
         area: Rect,
         selected: bool,
         store: &Store,
+        _layout: &LayoutArea
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
