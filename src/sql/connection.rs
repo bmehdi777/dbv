@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{
     any::{Any, AnyPoolOptions, AnyRow},
     Pool,
@@ -7,9 +8,12 @@ pub enum SqlThread {
     TableRow(AnyRow),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Connection {
+    #[serde(rename = "connectionString")]
     pub connection_string: String,
+
+    #[serde(skip_serializing, skip_deserializing)]
     pub pool: Option<Pool<Any>>,
 }
 
@@ -33,10 +37,13 @@ impl Connection {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ConnectionList {
     pub list: Vec<Connection>,
+
+    #[serde(skip_serializing, skip_deserializing)]
     pub current_connection: Option<usize>,
+    #[serde(skip_serializing, skip_deserializing)]
     pub is_loading: bool,
 }
 
