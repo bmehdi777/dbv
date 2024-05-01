@@ -1,13 +1,12 @@
-use crate::{
-    config::Config,
-    sql::connection::ConnectionList,
-    components::LogContent,
-};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
+use crate::{components::LogContent, config::Config, sql::connection::ConnectionList};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
+#[derive(Debug, Clone)]
 pub enum StoreAction {
     SendDatabaseData(Vec<String>),
     SendTablesData(Vec<String>),
+
+    SendError(String),
 }
 
 pub struct Store {
@@ -21,8 +20,8 @@ pub struct Store {
 
     log_contents: Vec<LogContent>,
 
-    pub actions_tx:  UnboundedSender<StoreAction>,
-    actions_rx: UnboundedReceiver<StoreAction>
+    pub actions_tx: UnboundedSender<StoreAction>,
+    pub actions_rx: UnboundedReceiver<StoreAction>,
 }
 
 impl Store {
@@ -47,19 +46,24 @@ impl Store {
             match action {
                 StoreAction::SendDatabaseData(data) => {
                     self.log(&format!("{:?}", data));
+                    self.connection_list.is_loading = false;
                     self.database_list = data;
-                    self.selected_pane = (0,1);
+                    self.selected_pane = (0, 1);
                 }
                 StoreAction::SendTablesData(data) => {
                     self.log(&format!("{:?}", data));
                     self.tables_list = data;
-                    self.selected_pane = (0,2);
+                    self.selected_pane = (0, 2);
+                }
+                StoreAction::SendError(e) => {
+                    self.error(&format!("{:?}", e));
+                    self.connection_list.current_connection = None;
                 }
                 _ => {}
             }
         }
     }
- 
+
     pub fn log(&mut self, content: &str) {
         self.log_contents.push(LogContent::Info(content.into()))
     }
@@ -75,4 +79,4 @@ impl Store {
     pub fn log_contents(&self) -> &Vec<LogContent> {
         &self.log_contents
     }
-} 
+}

@@ -1,6 +1,6 @@
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
-    application::Store,
+    application::{Store, StoreAction},
     events::{key::Keys, EventState},
     sql::database::Database,
 };
@@ -10,14 +10,12 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct ConnectionListComponent {
     list_state: ListState,
-    selected: isize,
 }
 
 impl ConnectionListComponent {
     pub fn new() -> Self {
         ConnectionListComponent {
             list_state: ListState::default(),
-            selected: -1,
         }
     }
 }
@@ -68,15 +66,16 @@ impl MutableComponent for ConnectionListComponent {
                     store.selected_pane = (101, 101);
                 }
                 Keys::Enter => {
+                    store.log("Trying to connect to the database...");
                     if let Some(index) = self.list_state.selected() {
                         if let Err(e) = &store.connection_list.set_current_connection(index) {
                             store.error(e);
                             return Ok(EventState::Wasted);
                         }
+                        store.connection_list.is_loading = true;
                         let pool = store.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
                         Database::get_databases(pool, actions_tx);
-                        self.selected = index as isize;
                     }
                 }
                 _ => return Ok(EventState::Wasted),
@@ -110,11 +109,12 @@ impl MutableComponent for ConnectionListComponent {
 
             let list = List::new(store.connection_list.list.iter().enumerate().map(
                 |(index, item)| {
-                    if self.selected == index as isize {
-                        format!(" * {}", item.connection_string.clone())
-                    } else {
-                        item.connection_string.clone()
+                    if let Some(i) = store.connection_list.current_connection {
+                        if i == index && store.connection_list.is_loading == false {
+                            return format!(" * {}", item.connection_string.clone());
+                        }
                     }
+                    item.connection_string.clone()
                 },
             ))
             .block(container.title_bottom(format!(
@@ -122,9 +122,7 @@ impl MutableComponent for ConnectionListComponent {
                 selected_idx,
                 store.connection_list.list.len()
             )))
-            .style(
-                Style::default().fg(self.get_color(store.config.theme_config.unselected_color)),
-            )
+            .style(Style::default().fg(self.get_color(store.config.theme_config.unselected_color)))
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 

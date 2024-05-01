@@ -70,6 +70,7 @@ pub trait Component {
     }
 }
 
+
 pub trait MutableComponent {
     fn event(&mut self, input: &Keys, store: &mut Store) -> Result<EventState>;
     fn draw(

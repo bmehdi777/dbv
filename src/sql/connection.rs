@@ -1,4 +1,3 @@
-use crate::application::{Store, StoreAction};
 use sqlx::{
     any::{Any, AnyPoolOptions, AnyRow},
     Pool,
@@ -26,6 +25,7 @@ impl Connection {
         self.pool = Some(
             AnyPoolOptions::new()
                 .max_connections(5)
+                .acquire_timeout(std::time::Duration::new(5, 0))
                 .connect_lazy(&self.connection_string)?,
         );
 
@@ -36,7 +36,8 @@ impl Connection {
 #[derive(Debug)]
 pub struct ConnectionList {
     pub list: Vec<Connection>,
-    current_connection: Option<usize>,
+    pub current_connection: Option<usize>,
+    pub is_loading: bool,
 }
 
 impl ConnectionList {
@@ -44,6 +45,7 @@ impl ConnectionList {
         ConnectionList {
             list: Vec::new(),
             current_connection: None,
+            is_loading: false,
         }
     }
 
@@ -61,6 +63,7 @@ impl ConnectionList {
     pub fn set_current_connection(&mut self, index: usize) -> Result<(), String> {
         self.current_connection = Some(index);
         if let Err(e) = self.list[index].set_pool() {
+            self.current_connection = None;
             return Err(format!("{}", e));
         }
         Ok(())
