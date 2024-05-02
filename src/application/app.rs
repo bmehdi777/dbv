@@ -162,7 +162,7 @@ impl<'a> App<'a> {
             }
             (1, 3) => {
                 let event = self.command.event(&k, &mut self.store)?;
-                if let EventState::ConfirmedText(content) = event {
+                if let EventState::ConfirmedText(_content) = event {
                     // todo
                     self.store.selected_pane = self.store.previous_selected_pane;
                 }

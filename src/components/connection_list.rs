@@ -1,7 +1,7 @@
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
     application::Store,
-    components::{HelpViewComponent, InputAction, InputPopupComponent, LayoutArea},
+    components::{InputAction, InputPopupComponent, LayoutArea},
     events::{key::Keys, EventState},
     sql::{connection::Connection, database::Database},
 };
