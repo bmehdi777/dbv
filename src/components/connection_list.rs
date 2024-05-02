@@ -27,18 +27,25 @@ impl MutableComponent for ConnectionListComponent {
     fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         if let Some(popup) = &mut self.popup {
             let event = popup.event(&input, store)?;
-            if let EventState::ConfirmedText(content) = event {
-                match popup.action {
-                    InputAction::Insert => {
-                        store.connection_list.list.push(Connection::new(content));
+            match event {
+                EventState::ConfirmedText(content) => {
+                    match popup.action {
+                        InputAction::Insert => {
+                            store.connection_list.list.push(Connection::new(content));
+                        }
+                        InputAction::Edit => {
+                            store.connection_list.list[self.list_state.selected().unwrap()]
+                                .connection_string = content;
+                        }
                     }
-                    InputAction::Edit => {
-                        store.connection_list.list[self.list_state.selected().unwrap()]
-                            .connection_string = content;
-                    }
+                    self.popup = None;
+                    store.is_lock = false;
                 }
-                self.popup = None;
-                store.is_lock = false;
+                EventState::Escaped => {
+                    self.popup = None;
+                    store.is_lock = false;
+                }
+                _ => {}
             }
             return Ok(EventState::Consumed);
         }

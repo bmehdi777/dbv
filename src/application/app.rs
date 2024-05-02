@@ -1,7 +1,7 @@
 use super::Store;
 use crate::{
     components::*,
-    events::{key::Keys, EventState},
+    events::{key::Keys, EventState, events::EventsHandling},
 };
 use ratatui::{prelude::*, widgets::*, Frame};
 use std::collections::HashMap;
@@ -18,11 +18,11 @@ pub struct App<'a> {
     log_view: LogViewComponent,
 
     max_pane_column: [u8; 2],
-    pub store: Store,
+    pub store: Store<'a>,
 }
 
 impl<'a> App<'a> {
-    pub fn new() -> Self {
+    pub fn new(event_handler: &'a EventsHandling) -> Self {
         let tab = TabComponent::new();
         let connection_list = ConnectionListComponent::new();
         let database_list = DatabaseListComponent::new();
@@ -34,7 +34,7 @@ impl<'a> App<'a> {
             HelpViewComponent::new(0, "Connections list".into(), App::help_view_text((0, 0)));
         let log_view = LogViewComponent::new();
 
-        let store = Store::new();
+        let store = Store::new(event_handler);
         App {
             tab,
             connection_list,

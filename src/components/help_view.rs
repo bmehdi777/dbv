@@ -1,8 +1,8 @@
 use super::MutableComponent;
 use crate::{
-    application::Store,
+    application::{Store, StoreAction},
+    components::LayoutArea,
     events::{key::Keys, EventState},
-    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -46,7 +46,7 @@ impl HelpViewComponent {
 }
 
 impl MutableComponent for HelpViewComponent {
-    fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::Char('j') => {
                 if let Some(i) = self.tablestate.selected() {
@@ -78,7 +78,17 @@ impl MutableComponent for HelpViewComponent {
                     self.scrollstate = self.scrollstate.position(max);
                 }
             }
-            Keys::Enter => {}
+            Keys::Enter => {
+                if let Some(i) = self.tablestate.selected() {
+                    store.selected_pane = store.previous_selected_pane;
+                    let key_str = *self.content.keys().collect::<Vec<_>>()[i];
+                    let key = Keys::Char(key_str.chars().nth(0).unwrap());
+                    store
+                        .event_handler
+                        .send_key(key)
+                        .expect("An error occured while sending keys to thread.");
+                }
+            }
             _ => return Ok(EventState::Wasted),
         }
         Ok(EventState::Consumed)
@@ -89,7 +99,7 @@ impl MutableComponent for HelpViewComponent {
         area: Rect,
         selected: bool,
         store: &Store,
-        _layout: &LayoutArea
+        _layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title(format!("Help - {}", self.title))

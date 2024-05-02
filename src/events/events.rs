@@ -49,4 +49,10 @@ impl EventsHandling {
     pub fn next(&self) -> Result<EventThread, std::sync::mpsc::RecvError> {
         self.rx.recv()
     }
+
+    pub fn send_key(&self, key: Keys) -> anyhow::Result<()> {
+        self.tx.send(EventThread::Event(key))?;
+        Ok(())
+
+    }
 }

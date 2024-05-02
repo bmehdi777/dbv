@@ -14,8 +14,8 @@ async fn main() -> anyhow::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
-    let mut app = App::new();
     let events_handling = EventsHandling::new().start();
+    let mut app = App::new(&events_handling);
 
     app.store
         .config
