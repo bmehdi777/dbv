@@ -1,8 +1,8 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
+    components::LayoutArea,
     events::{key::Keys, EventState},
-    components::LayoutArea
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -14,32 +14,26 @@ pub struct TableItem {
 
 #[derive(Debug, Clone)]
 pub struct TableListComponent {
-    table_items: Vec<TableItem>,
     list_state: ListState,
+    selected: isize,
 }
 
 impl TableListComponent {
     pub fn new() -> Self {
-        let table_items = vec![];
-        let mut list_state = ListState::default();
-        if table_items.len() > 0 {
-            list_state.select(Some(0));
-        }
         TableListComponent {
-            table_items,
-            list_state,
+            list_state: ListState::default(),
+            selected: -1,
         }
     }
 }
 
 impl MutableComponent for TableListComponent {
-    fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
-        log::info!("New input in TableListComponent");
-        if self.table_items.len() > 0 {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
+        if store.tables_list.len() > 0 {
             match input {
                 Keys::Char('j') => {
                     if let Some(i) = self.list_state.selected() {
-                        let index = if i == self.table_items.len() - 1 {
+                        let index = if i == store.tables_list.len() - 1 {
                             0
                         } else {
                             i + 1
@@ -53,13 +47,13 @@ impl MutableComponent for TableListComponent {
                 Keys::Char('k') => {
                     if let Some(i) = self.list_state.selected() {
                         let index = if i == 0 {
-                            self.table_items.len() - 1
+                            store.tables_list.len() - 1
                         } else {
                             i - 1
                         };
                         self.list_state.select(Some(index));
                     } else {
-                        self.list_state.select(Some(self.table_items.len() - 1));
+                        self.list_state.select(Some(store.tables_list.len() - 1));
                     }
                 }
                 _ => return Ok(EventState::Wasted),
@@ -74,7 +68,7 @@ impl MutableComponent for TableListComponent {
         area: ratatui::prelude::Rect,
         selected: bool,
         store: &Store,
-        _layout: &LayoutArea
+        _layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Tables")
@@ -84,12 +78,29 @@ impl MutableComponent for TableListComponent {
             )
             .border_type(BorderType::Rounded);
 
-        if self.table_items.len() > 0 {
-            let list = List::new(self.table_items.iter().map(|item| item.name.clone()))
-                .block(container)
-                .highlight_style(Style::default().fg(Color::LightGreen))
-                .highlight_symbol(">>")
-                .repeat_highlight_symbol(true);
+        if store.tables_list.len() > 0 {
+            let selected_idx = if let Some(index) = self.list_state.selected() {
+                index + 1
+            } else {
+                0
+            };
+            let list = List::new(store.tables_list.iter().enumerate().map(|(index, item)| {
+                if self.selected == index as isize {
+                    format!(" * {}", item.clone())
+                } else {
+                    item.clone()
+                }
+            }))
+            .style(
+                Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)),
+            )
+            .block(container.title_bottom(format!(
+                "{} of {}",
+                selected_idx,
+                store.tables_list.len()
+            )))
+            .highlight_style(Style::default().reversed())
+            .repeat_highlight_symbol(true);
 
             frame.render_stateful_widget(list, area, &mut self.list_state);
         } else {
