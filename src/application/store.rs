@@ -68,7 +68,7 @@ impl<'a> Store<'a> {
                     self.selected_pane = (0, 2);
                 }
                 StoreAction::SendRecordsData(data) => {
-                    let d = data.get(0).unwrap().columns().iter().map(|item| item.name());
+                    let d = data.get(0).unwrap().columns().iter().map(|item| item.name()).collect::<Vec<_>>();
                     self.log(&format!("{:?}", d));
 
                     self.selected_pane = (1, 2);
