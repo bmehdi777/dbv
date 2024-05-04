@@ -176,7 +176,7 @@ impl<'a> App<'a> {
     }
 
     fn event(&mut self, input: &Keys) -> anyhow::Result<EventState> {
-        if self.store.selected_pane != (101, 101) && self.store.selected_pane != (1, 3) {
+        if !self.store.is_lock && self.store.selected_pane != (1, 3) {
             match input {
                 Keys::CtrlChar('j') => {
                     if self.store.selected_pane == (100, 100) {
@@ -231,12 +231,6 @@ impl<'a> App<'a> {
                     };
                 }
                 Keys::Char('q') => {
-                    // don't quit if we are in command or popup pane
-                    if self.store.selected_pane == (1, 3) || self.store.selected_pane == (101, 101)
-                    {
-                        return Ok(EventState::Wasted);
-                    }
-
                     if self.store.selected_pane == (100, 100) {
                         self.store.selected_pane = self.store.previous_selected_pane;
                         return Ok(EventState::Consumed);
