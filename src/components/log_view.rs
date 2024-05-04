@@ -19,28 +19,24 @@ impl<'a> From<LogContent> for ListItem<'a> {
     fn from(val: LogContent) -> Self {
         match val {
             LogContent::Info(content) => {
-                log::info!("{}", content);
                 return ListItem::new(Line::from(vec![
                     Span::from("[INFO] ").style(Style::new().blue()),
                     content.into(),
                 ]));
             }
             LogContent::Success(content) => {
-                log::info!("SUCCESS - {}", content);
                 return ListItem::new(Line::from(vec![
                     Span::from("[SUCCESS] ").style(Style::new().green()),
                     content.into(),
                 ]));
             }
             LogContent::Error(content) => {
-                log::error!("{}", content);
                 return ListItem::new(Line::from(vec![
                     Span::from("[ERROR] ").style(Style::new().red()),
                     content.into(),
                 ]));
             }
             LogContent::Debug(content) => {
-                log::debug!("{}", content);
                 return ListItem::new(Line::from(vec![
                     Span::from("[DEBUG] ").style(Style::new().gray()),
                     content.into(),

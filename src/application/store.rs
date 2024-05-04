@@ -70,6 +70,7 @@ impl<'a> Store<'a> {
                 StoreAction::SendRecordsData(data) => {
                     let d = data.get(0).unwrap().columns().iter().map(|item| item.name());
                     self.log(&format!("{:?}", d));
+
                     self.selected_pane = (1, 2);
                 }
 
@@ -83,15 +84,19 @@ impl<'a> Store<'a> {
     }
 
     pub fn log(&mut self, content: &str) {
+        log::info!("{}", content);
         self.log_contents.push(LogContent::Info(content.into()))
     }
     pub fn success(&mut self, content: &str) {
+        log::info!("SUCCESS - {}", content);
         self.log_contents.push(LogContent::Success(content.into()))
     }
     pub fn error(&mut self, content: &str) {
+        log::error!("{}", content);
         self.log_contents.push(LogContent::Error(content.into()))
     }
     pub fn debug(&mut self, content: &str) {
+        log::debug!("{}", content);
         self.log_contents.push(LogContent::Debug(content.into()))
     }
     pub fn log_contents(&self) -> &Vec<LogContent> {
