@@ -26,11 +26,11 @@ impl DatabaseListComponent {
 
 impl MutableComponent for DatabaseListComponent {
     fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
-        if store.database_list.len() > 0 {
+        if store.database_list.list.len() > 0 {
             match input {
                 Keys::Char('j') => {
                     if let Some(i) = self.list_state.selected() {
-                        let index = if i == store.database_list.len() - 1 {
+                        let index = if i == store.database_list.list.len() - 1 {
                             0
                         } else {
                             i + 1
@@ -44,13 +44,13 @@ impl MutableComponent for DatabaseListComponent {
                 Keys::Char('k') => {
                     if let Some(i) = self.list_state.selected() {
                         let index = if i == 0 {
-                            store.database_list.len() - 1
+                            store.database_list.list.len() - 1
                         } else {
                             i - 1
                         };
                         self.list_state.select(Some(index));
                     } else {
-                        self.list_state.select(Some(store.database_list.len() - 1));
+                        self.list_state.select(Some(store.database_list.list.len() - 1));
                     }
                 }
                 Keys::Char('r') => {
@@ -60,7 +60,9 @@ impl MutableComponent for DatabaseListComponent {
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
-                        let current_db = store.database_list[index].clone();
+                        store.database_list.current_database = Some(index);
+
+                        let current_db = store.database_list.list[index].clone();
                         let pool = store.user_data.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
 
@@ -90,14 +92,14 @@ impl MutableComponent for DatabaseListComponent {
             )
             .border_type(BorderType::Rounded);
 
-        if store.database_list.len() > 0 {
+        if store.database_list.list.len() > 0 {
             let selected_idx = if let Some(index) = self.list_state.selected() {
                 index + 1
             } else {
                 0
             };
 
-            let list = List::new(store.database_list.iter().enumerate().map(|(index, item)| {
+            let list = List::new(store.database_list.list.iter().enumerate().map(|(index, item)| {
                 if self.selected == index as isize {
                     format!(" * {}", item.clone())
                 } else {
@@ -108,7 +110,7 @@ impl MutableComponent for DatabaseListComponent {
             .block(container.title_bottom(format!(
                 "{} of {}",
                 selected_idx,
-                store.database_list.len()
+                store.database_list.list.len()
             )))
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);

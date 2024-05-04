@@ -3,6 +3,7 @@ use crate::{
     application::Store,
     components::LayoutArea,
     events::{key::Keys, EventState},
+    sql::records::Records,
 };
 
 use ratatui::{prelude::*, widgets::*};
@@ -54,6 +55,17 @@ impl MutableComponent for TableListComponent {
                         self.list_state.select(Some(index));
                     } else {
                         self.list_state.select(Some(store.tables_list.len() - 1));
+                    }
+                }
+                Keys::Enter => {
+                    if let Some(index) = self.list_state.selected() {
+                        let current_db = store.database_list.list[store.database_list.current_database.unwrap()].clone();
+                        let current_table = store.tables_list[index].clone();
+                        let pool = store.user_data.connection_list.get_pool().unwrap();
+                        let actions_tx = store.actions_tx.clone();
+
+                        Records::get_all(pool, actions_tx, current_db, current_table);
+                        self.selected = index as isize;
                     }
                 }
                 _ => return Ok(EventState::Wasted),

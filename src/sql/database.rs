@@ -2,6 +2,20 @@ use crate::application::StoreAction;
 use sqlx::{Any, Pool, Row};
 use tokio::{spawn, sync::mpsc::UnboundedSender};
 
+pub struct DatabaseList {
+    pub list: Vec<String>,
+    pub current_database: Option<usize>,
+}
+
+impl DatabaseList {
+    pub fn new() -> Self {
+        DatabaseList {
+            list: Vec::new(),
+            current_database: None,
+        }
+    }
+}
+
 pub struct Database;
 
 impl Database {

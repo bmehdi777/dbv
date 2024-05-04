@@ -1,14 +1,16 @@
 use super::{preferences::Preference, user_data::UserData};
-use crate::{components::LogContent, events::events::EventsHandling, utils};
+use crate::{components::LogContent, events::events::EventsHandling, utils, sql::database::DatabaseList};
 use std::{fs, path::Path};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use sqlx::{any::AnyRow, Row, Column};
 
 const STORE_FILENAME: &'static str = "user_data.json";
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum StoreAction {
     SendDatabaseData(Vec<String>),
     SendTablesData(Vec<String>),
+    SendRecordsData(Vec<AnyRow>),
 
     SendEditConnectionItem(usize),
 
@@ -19,7 +21,7 @@ pub struct Store<'a> {
     pub preference: Preference,
     pub user_data: UserData,
     pub event_handler: &'a EventsHandling,
-    pub database_list: Vec<String>,
+    pub database_list: DatabaseList,
     pub tables_list: Vec<String>,
     pub exit: bool,
     pub selected_pane: (u8, u8), //x,y
@@ -39,7 +41,7 @@ impl<'a> Store<'a> {
             preference: Preference::default().load(),
             event_handler,
             user_data: UserData::new(),
-            database_list: Vec::new(),
+            database_list: DatabaseList::new(),
             tables_list: Vec::new(),
             exit: false,
             selected_pane: (0, 0),
@@ -57,13 +59,18 @@ impl<'a> Store<'a> {
                 StoreAction::SendDatabaseData(data) => {
                     self.log(&format!("{:?}", data));
                     self.user_data.connection_list.is_loading = false;
-                    self.database_list = data;
+                    self.database_list.list = data;
                     self.selected_pane = (0, 1);
                 }
                 StoreAction::SendTablesData(data) => {
                     self.log(&format!("{:?}", data));
                     self.tables_list = data;
                     self.selected_pane = (0, 2);
+                }
+                StoreAction::SendRecordsData(data) => {
+                    let d = data.get(0).unwrap().columns().iter().map(|item| item.name());
+                    self.log(&format!("{:?}", d));
+                    self.selected_pane = (1, 2);
                 }
 
                 StoreAction::SendError(e) => {
