@@ -21,6 +21,9 @@ async fn main() -> anyhow::Result<()> {
         .preference
         .init()
         .expect("An error occured while initializing the config file.");
+    app.store
+        .load()
+        .expect("An error occured while loading store.");
 
     sqlx::any::install_default_drivers();
 

@@ -1,4 +1,4 @@
-use super::preferences::Preference as Configuration;
+use crate::application::preferences::Preference;
 use anyhow::Result;
 use log::LevelFilter;
 use log4rs::{
@@ -9,7 +9,7 @@ use log4rs::{
 use serde::{Deserialize, Serialize};
 use std::env;
 
-pub fn set_logger(config: &Configuration) -> Result<()> {
+pub fn set_logger(config: &Preference) -> Result<()> {
     let home_path = env::var("HOME").expect("An error occured while reading $HOME.");
 
     let pattern = "[{d(%Y-%m-%d %H:%M:%S)} {l}] {m}{n}";

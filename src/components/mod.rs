@@ -3,7 +3,7 @@ use ratatui::{layout::Rect, prelude::*, Frame};
 
 use crate::{
     application::Store,
-    preferences::ThemeConfig,
+    application::preferences::ThemeConfig,
     events::{key::Keys, EventState},
 };
 

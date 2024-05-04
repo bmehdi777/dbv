@@ -54,14 +54,14 @@ impl MutableComponent for DatabaseListComponent {
                     }
                 }
                 Keys::Char('r') => {
-                        let pool = store.connection_list.get_pool().unwrap();
+                        let pool = store.user_data.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
                         Database::get_databases(pool, actions_tx);
                 }
                 Keys::Enter => {
                     if let Some(index) = self.list_state.selected() {
                         let current_db = store.database_list[index].clone();
-                        let pool = store.connection_list.get_pool().unwrap();
+                        let pool = store.user_data.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
 
                         Tables::get_tables(pool, actions_tx, current_db);

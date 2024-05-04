@@ -1,5 +1,9 @@
-use crate::{components::LogContent, preferences::Preference, sql::connection::ConnectionList, events::events::EventsHandling};
+use super::{preferences::Preference, user_data::UserData};
+use crate::{components::LogContent, events::events::EventsHandling, utils};
+use std::{fs, path::Path};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+
+const STORE_FILENAME: &'static str = "user_data.json";
 
 #[derive(Debug, Clone)]
 pub enum StoreAction {
@@ -13,8 +17,8 @@ pub enum StoreAction {
 
 pub struct Store<'a> {
     pub preference: Preference,
+    pub user_data: UserData,
     pub event_handler: &'a EventsHandling,
-    pub connection_list: ConnectionList,
     pub database_list: Vec<String>,
     pub tables_list: Vec<String>,
     pub exit: bool,
@@ -34,7 +38,7 @@ impl<'a> Store<'a> {
         Store {
             preference: Preference::default().load(),
             event_handler,
-            connection_list: ConnectionList::new(),
+            user_data: UserData::new(),
             database_list: Vec::new(),
             tables_list: Vec::new(),
             exit: false,
@@ -52,7 +56,7 @@ impl<'a> Store<'a> {
             match action {
                 StoreAction::SendDatabaseData(data) => {
                     self.log(&format!("{:?}", data));
-                    self.connection_list.is_loading = false;
+                    self.user_data.connection_list.is_loading = false;
                     self.database_list = data;
                     self.selected_pane = (0, 1);
                 }
@@ -64,7 +68,7 @@ impl<'a> Store<'a> {
 
                 StoreAction::SendError(e) => {
                     self.error(&format!("{:?}", e));
-                    self.connection_list.current_connection = None;
+                    self.user_data.connection_list.current_connection = None;
                 }
                 _ => {}
             }
@@ -85,5 +89,28 @@ impl<'a> Store<'a> {
     }
     pub fn log_contents(&self) -> &Vec<LogContent> {
         &self.log_contents
+    }
+
+    pub fn save(&self) -> anyhow::Result<()> {
+        if !Path::new(&utils::get_path_app_folder()).exists() {
+            anyhow::bail!("$HOME/.config/dbv/ doesn't exist.");
+        }
+
+        let user_data = serde_json::to_string_pretty(&self.user_data)?;
+        fs::write(utils::get_path_app_file(STORE_FILENAME), user_data)?;
+
+        Ok(())
+    }
+
+    pub fn load(&mut self) -> anyhow::Result<()> {
+        let filepath = utils::get_path_app_file(STORE_FILENAME);
+        if !Path::new(&filepath).exists() {
+            return Ok(());
+        }
+
+        let user_data = fs::read_to_string(&filepath)?;
+        self.user_data = serde_json::from_str(&user_data)?;
+
+        Ok(())
     }
 }

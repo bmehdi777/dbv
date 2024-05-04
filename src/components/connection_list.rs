@@ -31,13 +31,14 @@ impl MutableComponent for ConnectionListComponent {
                 EventState::ConfirmedText(content) => {
                     match popup.action {
                         InputAction::Insert => {
-                            store.connection_list.list.push(Connection::new(content));
+                            store.user_data.connection_list.list.push(Connection::new(content));
                         }
                         InputAction::Edit => {
-                            store.connection_list.list[self.list_state.selected().unwrap()]
+                            store.user_data.connection_list.list[self.list_state.selected().unwrap()]
                                 .connection_string = content;
                         }
                     }
+                    store.save()?;
                     self.popup = None;
                     store.is_lock = false;
                 }
@@ -64,11 +65,11 @@ impl MutableComponent for ConnectionListComponent {
             }
             _ => {}
         }
-        if store.connection_list.list.len() > 0 {
+        if store.user_data.connection_list.list.len() > 0 {
             match input {
                 Keys::Char('j') => {
                     if let Some(i) = self.list_state.selected() {
-                        let index = if i == store.connection_list.list.len() - 1 {
+                        let index = if i == store.user_data.connection_list.list.len() - 1 {
                             0
                         } else {
                             i + 1
@@ -82,20 +83,21 @@ impl MutableComponent for ConnectionListComponent {
                 Keys::Char('k') => {
                     if let Some(i) = self.list_state.selected() {
                         let index = if i == 0 {
-                            store.connection_list.list.len() - 1
+                            store.user_data.connection_list.list.len() - 1
                         } else {
                             i - 1
                         };
                         self.list_state.select(Some(index));
                     } else {
                         self.list_state
-                            .select(Some(store.connection_list.list.len() - 1));
+                            .select(Some(store.user_data.connection_list.list.len() - 1));
                     }
                 }
                 Keys::Char('d') => {
                     if let Some(index) = self.list_state.selected() {
-                        store.connection_list.list.remove(index);
+                        store.user_data.connection_list.list.remove(index);
                         store.log("Connection string removed.");
+                        store.save()?;
                     }
                 }
                 Keys::Char('e') => {
@@ -107,20 +109,20 @@ impl MutableComponent for ConnectionListComponent {
                     store.is_lock = true;
                     self.popup = Some(InputPopupComponent::new(
                         String::from("Connection string"),
-                        store.connection_list.list[index].connection_string.clone(),
+                        store.user_data.connection_list.list[index].connection_string.clone(),
                         InputAction::Edit,
                     ));
-                    store.connection_list.reset_current_connection();
+                    store.user_data.connection_list.reset_current_connection();
                 }
                 Keys::Enter => {
                     store.log("Trying to connect to the database...");
                     if let Some(index) = self.list_state.selected() {
-                        if let Err(e) = &store.connection_list.set_current_connection(index) {
+                        if let Err(e) = &store.user_data.connection_list.set_current_connection(index) {
                             store.error(e);
                             return Ok(EventState::Wasted);
                         }
-                        store.connection_list.is_loading = true;
-                        let pool = store.connection_list.get_pool().unwrap();
+                        store.user_data.connection_list.is_loading = true;
+                        let pool = store.user_data.connection_list.get_pool().unwrap();
                         let actions_tx = store.actions_tx.clone();
                         Database::get_databases(pool, actions_tx);
                     }
@@ -162,17 +164,17 @@ impl MutableComponent for ConnectionListComponent {
             )
             .border_type(BorderType::Rounded);
 
-        if store.connection_list.list.len() > 0 {
+        if store.user_data.connection_list.list.len() > 0 {
             let selected_idx = if let Some(index) = self.list_state.selected() {
                 index + 1
             } else {
                 0
             };
 
-            let list = List::new(store.connection_list.list.iter().enumerate().map(
+            let list = List::new(store.user_data.connection_list.list.iter().enumerate().map(
                 |(index, item)| {
-                    if let Some(i) = store.connection_list.current_connection {
-                        if i == index && store.connection_list.is_loading == false {
+                    if let Some(i) = store.user_data.connection_list.current_connection {
+                        if i == index && store.user_data.connection_list.is_loading == false {
                             return format!(" * {}", item.connection_string.clone());
                         }
                     }
@@ -182,7 +184,7 @@ impl MutableComponent for ConnectionListComponent {
             .block(container.title_bottom(format!(
                 "{} of {}",
                 selected_idx,
-                store.connection_list.list.len()
+                store.user_data.connection_list.list.len()
             )))
             .style(Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)))
             .highlight_style(Style::default().reversed())

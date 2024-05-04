@@ -1,8 +1,7 @@
-use super::log::LogLevel;
+use crate::{log::LogLevel, utils};
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path};
+use std::{fs, path};
 
-const CONFIG_PATH: &'static str = "/.config/dbv/";
 const CONFIG_FILENAME: &'static str = "dbv.json";
 
 type RGB = [u8; 3];
@@ -24,7 +23,7 @@ impl Preference {
         }
     }
     pub fn load(&self) -> Self {
-        let file_content = if let Ok(content) = fs::read_to_string(Preference::get_path_config()) {
+        let file_content = if let Ok(content) = fs::read_to_string(utils::get_path_app_file(CONFIG_FILENAME)) {
             content
         } else {
             return *self;
@@ -38,27 +37,18 @@ impl Preference {
     }
 
     pub fn init(&self) -> std::io::Result<()> {
-        if path::Path::new(&Preference::get_path_config()).exists() {
+        if path::Path::new(&utils::get_path_app_file(CONFIG_FILENAME)).exists() {
             return Ok(());
         }
 
-        if !path::Path::new(&Preference::get_path_config_folder()).exists() {
-            fs::create_dir(Preference::get_path_config_folder())?;
+        if !path::Path::new(&utils::get_path_app_folder()).exists() {
+            fs::create_dir(utils::get_path_app_folder())?;
         }
 
         let content = serde_json::to_string_pretty(&Preference::default())?;
-        fs::write(Preference::get_path_config(), content)?;
+        fs::write(utils::get_path_app_file(CONFIG_FILENAME), content)?;
 
         Ok(())
-    }
-
-    fn get_path_config_folder() -> String {
-        let home = env::var("HOME").expect("An error occured while reading $HOME.");
-        format!("{}{}", home, CONFIG_PATH)
-    }
-    fn get_path_config() -> String {
-        let home = env::var("HOME").expect("An error occured while reading $HOME.");
-        format!("{}{}{}", home, CONFIG_PATH, CONFIG_FILENAME)
     }
 }
 
