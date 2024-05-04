@@ -8,7 +8,7 @@ const CONFIG_FILENAME: &'static str = "dbv.json";
 type RGB = [u8; 3];
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub struct Config {
+pub struct Preference {
     #[serde(rename = "theme")]
     pub theme_config: ThemeConfig,
 
@@ -16,20 +16,20 @@ pub struct Config {
     pub log_level: LogLevel,
 }
 
-impl Config {
+impl Preference {
     pub fn default() -> Self {
-        Config {
+        Preference {
             theme_config: ThemeConfig::default(),
             log_level: LogLevel::default(),
         }
     }
     pub fn load(&self) -> Self {
-        let file_content = if let Ok(content) = fs::read_to_string(Config::get_path_config()) {
+        let file_content = if let Ok(content) = fs::read_to_string(Preference::get_path_config()) {
             content
         } else {
             return *self;
         };
-        let value: Config = if let Ok(content) = serde_json::from_str(&file_content) {
+        let value: Preference = if let Ok(content) = serde_json::from_str(&file_content) {
             content
         } else {
             *self
@@ -38,16 +38,16 @@ impl Config {
     }
 
     pub fn init(&self) -> std::io::Result<()> {
-        if path::Path::new(&Config::get_path_config()).exists() {
+        if path::Path::new(&Preference::get_path_config()).exists() {
             return Ok(());
         }
 
-        if !path::Path::new(&Config::get_path_config_folder()).exists() {
-            fs::create_dir(Config::get_path_config_folder())?;
+        if !path::Path::new(&Preference::get_path_config_folder()).exists() {
+            fs::create_dir(Preference::get_path_config_folder())?;
         }
 
-        let content = serde_json::to_string_pretty(&Config::default())?;
-        fs::write(Config::get_path_config(), content)?;
+        let content = serde_json::to_string_pretty(&Preference::default())?;
+        fs::write(Preference::get_path_config(), content)?;
 
         Ok(())
     }

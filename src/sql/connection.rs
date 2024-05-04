@@ -39,6 +39,7 @@ impl Connection {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConnectionList {
+    #[serde(rename = "connectionList")]
     pub list: Vec<Connection>,
 
     #[serde(skip_serializing, skip_deserializing)]

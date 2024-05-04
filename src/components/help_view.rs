@@ -106,7 +106,7 @@ impl MutableComponent for HelpViewComponent {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(
-                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.preference.theme_config)),
             );
 
         let table = Table::new(
@@ -116,11 +116,11 @@ impl MutableComponent for HelpViewComponent {
                     Row::new(vec![
                         Cell::from(*key).style(
                             Style::default()
-                                .fg(self.get_color(store.config.theme_config.help_key_color)),
+                                .fg(self.get_color(store.preference.theme_config.help_key_color)),
                         ),
                         Cell::from(*value).style(
                             Style::default()
-                                .fg(self.get_color(store.config.theme_config.help_desc_color))
+                                .fg(self.get_color(store.preference.theme_config.help_desc_color))
                                 .italic(),
                         ),
                     ])

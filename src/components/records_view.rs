@@ -46,7 +46,7 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
         let container = Block::default()
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.preference.theme_config)),
             )
             .border_type(BorderType::Rounded);
 

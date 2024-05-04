@@ -54,7 +54,7 @@ impl MutableComponent for CommandComponent {
             .title("Command")
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.preference.theme_config)),
             )
             .padding(Padding::left(1))
             .border_type(BorderType::Rounded);

@@ -18,13 +18,13 @@ async fn main() -> anyhow::Result<()> {
     let mut app = App::new(&events_handling);
 
     app.store
-        .config
+        .preference
         .init()
         .expect("An error occured while initializing the config file.");
 
     sqlx::any::install_default_drivers();
 
-    set_logger(&app.store.config)?;
+    set_logger(&app.store.preference)?;
 
     loop {
         // draw

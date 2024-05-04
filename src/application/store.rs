@@ -1,4 +1,4 @@
-use crate::{components::LogContent, config::Config, sql::connection::ConnectionList, events::events::EventsHandling};
+use crate::{components::LogContent, preferences::Preference, sql::connection::ConnectionList, events::events::EventsHandling};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug, Clone)]
@@ -12,7 +12,7 @@ pub enum StoreAction {
 }
 
 pub struct Store<'a> {
-    pub config: Config,
+    pub preference: Preference,
     pub event_handler: &'a EventsHandling,
     pub connection_list: ConnectionList,
     pub database_list: Vec<String>,
@@ -32,7 +32,7 @@ impl<'a> Store<'a> {
     pub fn new(event_handler: &'a EventsHandling) -> Self {
         let (actions_tx, actions_rx) = unbounded_channel();
         Store {
-            config: Config::default().load(),
+            preference: Preference::default().load(),
             event_handler,
             connection_list: ConnectionList::new(),
             database_list: Vec::new(),

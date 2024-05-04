@@ -158,7 +158,7 @@ impl MutableComponent for ConnectionListComponent {
             .title("Connections")
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.selected_color(selected, store.config.theme_config)),
+                Style::default().fg(self.selected_color(selected, store.preference.theme_config)),
             )
             .border_type(BorderType::Rounded);
 
@@ -184,7 +184,7 @@ impl MutableComponent for ConnectionListComponent {
                 selected_idx,
                 store.connection_list.list.len()
             )))
-            .style(Style::default().fg(self.get_color(store.config.theme_config.unselected_color)))
+            .style(Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)))
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 

@@ -274,9 +274,9 @@ impl<'a> App<'a> {
         let size = frame.size();
         if size.width <= 50 || size.height <= 21 {
             let color = Color::Rgb(
-                self.store.config.theme_config.unselected_color[0],
-                self.store.config.theme_config.unselected_color[1],
-                self.store.config.theme_config.unselected_color[2],
+                self.store.preference.theme_config.unselected_color[0],
+                self.store.preference.theme_config.unselected_color[1],
+                self.store.preference.theme_config.unselected_color[2],
             );
             let not_enough_space = Paragraph::default().block(
                 Block::default()

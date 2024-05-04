@@ -1,4 +1,4 @@
-use super::config::Config as Configuration;
+use super::preferences::Preference as Configuration;
 use anyhow::Result;
 use log::LevelFilter;
 use log4rs::{

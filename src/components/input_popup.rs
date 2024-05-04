@@ -108,14 +108,14 @@ impl MutableComponent for InputPopupComponent {
             .title(&*self.title)
             .borders(Borders::ALL)
             .border_style(
-                Style::default().fg(self.get_color(store.config.theme_config.selected_color)),
+                Style::default().fg(self.get_color(store.preference.theme_config.selected_color)),
             )
             .padding(Padding::left(1))
             .border_type(BorderType::Rounded);
 
         let text = Paragraph::new(&*self.content)
             .block(container)
-            .style(Style::new().fg(self.get_color(store.config.theme_config.unselected_color)));
+            .style(Style::new().fg(self.get_color(store.preference.theme_config.unselected_color)));
 
         frame.render_widget(Clear, area);
         frame.set_cursor(area.x + 2 + self.cursor_pos as u16, area.y + 1);

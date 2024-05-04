@@ -25,7 +25,7 @@ impl Component for HelpTextComponent {
         _selected: bool,
         store: &Store,
     ) -> anyhow::Result<()> {
-        let color_text = store.config.theme_config.help_text_color;
+        let color_text = store.preference.theme_config.help_text_color;
         let help_text = Paragraph::new("<C-h>: Move left, <C-j>: Move down, <C-k>: Move up, <C-l>: Move right, q: Quit, ?: Help")
             .style(Style::default().fg(Color::Rgb(color_text[0], color_text[1], color_text[2])));
 
