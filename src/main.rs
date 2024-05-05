@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
         };
 
         // update
-        app.store.update();
+        app.update();
 
         if app.store.exit {
             break;

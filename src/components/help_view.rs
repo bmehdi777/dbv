@@ -1,6 +1,6 @@
 use super::MutableComponent;
 use crate::{
-    application::{Store, StoreAction},
+    application::Store,
     components::LayoutArea,
     events::{key::Keys, EventState},
 };

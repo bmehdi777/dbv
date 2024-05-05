@@ -1,10 +1,13 @@
-use super::{preferences::Preference, user_data::UserData};
-use crate::{components::LogContent, events::events::EventsHandling, utils, sql::database::DatabaseList};
+use super::{preferences::Preference, user_data::UserData, UpdateAction};
+use crate::{
+    components::LogContent, events::events::EventsHandling, sql::database::DatabaseList, utils,
+};
+use sqlx::{any::AnyRow, Column, Row};
 use std::{fs, path::Path};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use sqlx::{any::AnyRow, Row, Column};
 
 const STORE_FILENAME: &'static str = "user_data.json";
+
 
 #[derive(Clone)]
 pub enum StoreAction {
@@ -15,6 +18,7 @@ pub enum StoreAction {
     SendEditConnectionItem(usize),
 
     SendError(String),
+
 }
 
 pub struct Store<'a> {
@@ -30,8 +34,8 @@ pub struct Store<'a> {
 
     log_contents: Vec<LogContent>,
 
-    pub actions_tx: UnboundedSender<StoreAction>,
-    pub actions_rx: UnboundedReceiver<StoreAction>,
+    pub actions_tx: UnboundedSender<UpdateAction>,
+    pub actions_rx: UnboundedReceiver<UpdateAction>,
 }
 
 impl<'a> Store<'a> {
@@ -53,33 +57,44 @@ impl<'a> Store<'a> {
         }
     }
 
-    pub fn update(&mut self) {
-        while let Ok(action) = self.actions_rx.try_recv() {
-            match action {
-                StoreAction::SendDatabaseData(data) => {
-                    self.log(&format!("{:?}", data));
-                    self.user_data.connection_list.is_loading = false;
-                    self.database_list.list = data;
-                    self.selected_pane = (0, 1);
-                }
-                StoreAction::SendTablesData(data) => {
-                    self.log(&format!("{:?}", data));
-                    self.tables_list = data;
-                    self.selected_pane = (0, 2);
-                }
-                StoreAction::SendRecordsData(data) => {
-                    let d = data.get(0).unwrap().columns().iter().map(|item| item.name()).collect::<Vec<_>>();
-                    self.log(&format!("{:?}", d));
+    pub fn reset_database_list(&mut self) {
+        self.database_list = DatabaseList::new();
+    }
+    pub fn reset_tables_list(&mut self) {
+        self.tables_list = Vec::new();
+    }
 
-                    self.selected_pane = (1, 2);
-                }
-
-                StoreAction::SendError(e) => {
-                    self.error(&format!("{:?}", e));
-                    self.user_data.connection_list.current_connection = None;
-                }
-                _ => {}
+    pub fn update(&mut self, action: StoreAction) {
+        match action {
+            StoreAction::SendDatabaseData(data) => {
+                self.log(&format!("{:?}", data));
+                self.user_data.connection_list.is_loading = false;
+                self.database_list.list = data;
+                self.selected_pane = (0, 1);
             }
+            StoreAction::SendTablesData(data) => {
+                self.log(&format!("{:?}", data));
+                self.tables_list = data;
+                self.selected_pane = (0, 2);
+            }
+            StoreAction::SendRecordsData(data) => {
+                let d = data
+                    .get(0)
+                    .unwrap()
+                    .columns()
+                    .iter()
+                    .map(|item| item.name())
+                    .collect::<Vec<_>>();
+                self.log(&format!("{:?}", d));
+
+                self.selected_pane = (1, 2);
+            }
+
+            StoreAction::SendError(e) => {
+                self.error(&format!("{:?}", e));
+                self.user_data.connection_list.current_connection = None;
+            }
+            _ => {}
         }
     }
 

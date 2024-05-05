@@ -1,10 +1,24 @@
-use super::Store;
+use super::{Store, StoreAction};
 use crate::{
     components::*,
-    events::{key::Keys, EventState, events::EventsHandling},
+    events::{events::EventsHandling, key::Keys, EventState},
 };
 use ratatui::{prelude::*, widgets::*, Frame};
 use std::collections::HashMap;
+
+#[derive(Clone)]
+pub enum UpdateAction {
+    SendStoreAction(StoreAction),
+    SendAppAction(AppAction),
+}
+
+#[derive(Clone)]
+pub enum AppAction {
+    SendResetDatabaseList,
+    SendResetTableList,
+    SendResetRecords,
+    SendReset,
+}
 
 pub struct App<'a> {
     tab: TabComponent,
@@ -140,6 +154,37 @@ impl<'a> App<'a> {
         }
 
         Ok(())
+    }
+
+    pub fn update(&mut self) {
+        while let Ok(action) = self.store.actions_rx.try_recv() {
+            match action {
+                UpdateAction::SendStoreAction(act) => {
+                    self.store.update(act);
+                }
+                UpdateAction::SendAppAction(act) => {
+                    self.update_action(act);
+                }
+            }
+        }
+    }
+
+    fn update_action(&mut self, action: AppAction) {
+        match action {
+            AppAction::SendResetDatabaseList => {
+                self.database_list = DatabaseListComponent::new();
+            }
+            AppAction::SendResetTableList => {
+                self.table_list = TableListComponent::new();
+            }
+            AppAction::SendResetRecords => {}
+            AppAction::SendReset => {
+                self.store.reset_database_list();
+                self.store.reset_tables_list();
+                self.database_list = DatabaseListComponent::new();
+                self.table_list = TableListComponent::new();
+            }
+        }
     }
 
     pub fn event_handling(&mut self, k: Keys) -> anyhow::Result<()> {

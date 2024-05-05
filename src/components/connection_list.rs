@@ -1,6 +1,6 @@
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
-    application::Store,
+    application::{AppAction, Store, UpdateAction},
     components::{InputAction, InputPopupComponent, LayoutArea},
     events::{key::Keys, EventState},
     sql::{connection::Connection, database::Database},
@@ -21,21 +21,24 @@ impl ConnectionListComponent {
             popup: None,
         }
     }
-}
 
-impl MutableComponent for ConnectionListComponent {
-    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
+    pub fn event_popup(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         if let Some(popup) = &mut self.popup {
             let event = popup.event(&input, store)?;
             match event {
                 EventState::ConfirmedText(content) => {
                     match popup.action {
                         InputAction::Insert => {
-                            store.user_data.connection_list.list.push(Connection::new(content));
+                            store
+                                .user_data
+                                .connection_list
+                                .list
+                                .push(Connection::new(content));
                         }
                         InputAction::Edit => {
-                            store.user_data.connection_list.list[self.list_state.selected().unwrap()]
-                                .connection_string = content;
+                            store.user_data.connection_list.list
+                                [self.list_state.selected().unwrap()]
+                            .connection_string = content;
                         }
                     }
                     store.save()?;
@@ -49,6 +52,20 @@ impl MutableComponent for ConnectionListComponent {
                 _ => {}
             }
             return Ok(EventState::Consumed);
+        }
+        Ok(EventState::Wasted)
+    }
+}
+
+impl MutableComponent for ConnectionListComponent {
+    fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
+        match self.event_popup(input, store) {
+            Ok(event) => {
+                if let EventState::Consumed = event {
+                    return Ok(EventState::Consumed);
+                }
+            }
+            Err(e) => anyhow::bail!(e),
         }
 
         match input {
@@ -109,20 +126,30 @@ impl MutableComponent for ConnectionListComponent {
                     store.is_lock = true;
                     self.popup = Some(InputPopupComponent::new(
                         String::from("Connection string"),
-                        store.user_data.connection_list.list[index].connection_string.clone(),
+                        store.user_data.connection_list.list[index]
+                            .connection_string
+                            .clone(),
                         InputAction::Edit,
                     ));
                     store.user_data.connection_list.reset_current_connection();
                 }
                 Keys::Enter => {
+                    store
+                        .actions_tx
+                        .send(UpdateAction::SendAppAction(AppAction::SendReset))
+                        ?;
                     store.log("Trying to connect to the database...");
                     if let Some(index) = self.list_state.selected() {
-                        if let Err(e) = &store.user_data.connection_list.set_current_connection(index) {
+                        if let Err(e) = &store
+                            .user_data
+                            .connection_list
+                            .set_current_connection(index)
+                        {
                             store.error(e);
                             return Ok(EventState::Wasted);
                         }
                         store.user_data.connection_list.is_loading = true;
-                        let pool = store.user_data.connection_list.get_pool().unwrap();
+                        let pool = store.user_data.connection_list.get_pool()?;
                         let actions_tx = store.actions_tx.clone();
                         Database::get_databases(pool, actions_tx);
                     }
@@ -186,7 +213,9 @@ impl MutableComponent for ConnectionListComponent {
                 selected_idx,
                 store.user_data.connection_list.list.len()
             )))
-            .style(Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)))
+            .style(
+                Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)),
+            )
             .highlight_style(Style::default().reversed())
             .repeat_highlight_symbol(true);
 

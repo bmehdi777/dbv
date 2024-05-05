@@ -1,4 +1,4 @@
-use crate::application::StoreAction;
+use crate::application::{UpdateAction, StoreAction};
 use sqlx::{Any, Pool, Row};
 use tokio::{spawn, sync::mpsc::UnboundedSender};
 
@@ -19,7 +19,7 @@ impl DatabaseList {
 pub struct Database;
 
 impl Database {
-    pub fn get_databases(pool: Pool<Any>, sender: UnboundedSender<StoreAction>) {
+    pub fn get_databases(pool: Pool<Any>, sender: UnboundedSender<UpdateAction>) {
         spawn(async move {
             let query = sqlx::query("SHOW databases").fetch_all(&pool).await;
 
@@ -30,12 +30,12 @@ impl Database {
                         .map(|row| row.try_get("Database").unwrap())
                         .collect();
                     sender
-                        .send(StoreAction::SendDatabaseData(res.clone()))
+                        .send(UpdateAction::SendStoreAction(StoreAction::SendDatabaseData(res.clone())))
                         .unwrap();
                 }
                 Err(e) => {
                     sender
-                        .send(StoreAction::SendError(format!("{:?}", e)))
+                        .send(UpdateAction::SendStoreAction(StoreAction::SendError(format!("{:?}", e))))
                         .unwrap();
                 }
             };
