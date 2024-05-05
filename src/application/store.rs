@@ -2,12 +2,11 @@ use super::{preferences::Preference, user_data::UserData, UpdateAction};
 use crate::{
     components::LogContent, events::events::EventsHandling, sql::database::DatabaseList, utils,
 };
-use sqlx::{any::AnyRow, Column, Row};
+use sqlx::{any::AnyRow, Column, Row, TypeInfo};
 use std::{fs, path::Path};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 const STORE_FILENAME: &'static str = "user_data.json";
-
 
 #[derive(Clone)]
 pub enum StoreAction {
@@ -18,7 +17,6 @@ pub enum StoreAction {
     SendEditConnectionItem(usize),
 
     SendError(String),
-
 }
 
 pub struct Store<'a> {
@@ -85,7 +83,32 @@ impl<'a> Store<'a> {
                     .iter()
                     .map(|item| item.name())
                     .collect::<Vec<_>>();
+                let test = data
+                    .get(1)
+                    .unwrap()
+                    .columns()
+                    .iter()
+                    .map(|item| {
+                        let ord = item.ordinal();
+                        let info = item.type_info().name();
+                        match info {
+                            "TEXT" => return data.get(1).unwrap().get::<String, _>(ord),
+                            "INTEGER" => {
+                                return data.get(1).unwrap().get::<i64, _>(ord).to_string()
+                            }
+                            _ => {
+                                return "NOT IMPLEMENTED".to_string()
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                // See following links : 
+                // https://docs.rs/sqlx/latest/sqlx/mysql/types/index.html
+                // https://docs.rs/sqlx/latest/sqlx/sqlite/types/index.html
+                // https://docs.rs/sqlx/latest/sqlx/postgres/types/index.html
                 self.log(&format!("{:?}", d));
+                self.log(&format!("{:?}", test));
 
                 self.selected_pane = (1, 2);
             }

@@ -1,11 +1,11 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
+    components::LayoutArea,
     events::{key::Keys, EventState},
-    components::LayoutArea
 };
-
 use ratatui::{prelude::*, widgets::*};
+use sqlx::{any::AnyRow, Column, Row as SqlRow};
 
 pub struct RecordsViewComponent<'a> {
     header: Row<'a>,
@@ -16,17 +16,42 @@ pub struct RecordsViewComponent<'a> {
 
 impl<'a> RecordsViewComponent<'a> {
     pub fn new() -> Self {
-        let header: Row<'a> = Row::new(vec![
-            Cell::from("Hello").style(Style::default().fg(Color::White).bg(Color::Blue)),
-            Cell::from("World").style(Style::default().fg(Color::White).bg(Color::Blue)),
-        ]);
-        let rows: Vec<Row<'a>> = vec![];
         let table_state = TableState::default();
         RecordsViewComponent {
-            header,
-            rows,
+            header: Row::default(),
+            rows: Vec::new(),
             table_state,
         }
+    }
+
+    pub fn set_header(&mut self, header: Vec<String>, store: &Store) {
+        let color = Color::Rgb(
+            store.preference.theme_config.selected_color[0],
+            store.preference.theme_config.selected_color[1],
+            store.preference.theme_config.selected_color[2],
+        );
+        self.header = Row::new(
+            header
+                .iter()
+                .map(|item| {
+                    Cell::from(item.clone()).style(Style::default().fg(Color::White).bg(color))
+                })
+                .collect::<Vec<_>>(),
+        );
+    }
+
+    pub fn set_body(&mut self, content: &'a Vec<AnyRow>, _store: &Store) {
+        self.rows = content
+            .iter()
+            .map(|row| {
+                Row::new(
+                    row.columns
+                        .iter()
+                        .map(|col| Cell::from(col.name()))
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .collect();
     }
 }
 
@@ -41,7 +66,7 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
         area: Rect,
         selected: bool,
         store: &Store,
-        _layout: &LayoutArea
+        _layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .borders(Borders::ALL)
@@ -50,7 +75,7 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
             )
             .border_type(BorderType::Rounded);
 
-        let width = vec![Constraint::Fill(1); self.rows.len()];
+        let width = vec![Constraint::Fill(1); 2];
 
         if self.rows.len() > 0 {
             let table = Table::new(self.rows.clone(), width)
