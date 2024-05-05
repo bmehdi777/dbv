@@ -10,5 +10,4 @@
 
 
 - Performance issue on rendering of list : if you keep button pressed, it goes down even when you don't. Maybe a problem with debug version ? -> indeed, it's only in debug mode
-- reset view when changing connection/database/table
 
