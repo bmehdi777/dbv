@@ -1,7 +1,10 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
     application::Store,
-    components::LayoutArea,
+    components::{
+        widgets::custom_table::{CustomTable, CustomTableState},
+        LayoutArea,
+    },
     events::{key::Keys, EventState},
     sql::parser::SqlParser,
 };
@@ -141,10 +144,10 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                     .title_bottom(Line::from(format!("Total : {}", total)).right_aligned())
                     .title_bottom(Line::from(format!("{} of {}", selected, self.rows.len())));
             }
-            let table = Table::new(self.rows.clone(), width)
-                .block(container)
-                .highlight_style(Style::default().reversed())
-                .header(self.header.clone());
+            //let table = Table::new(self.rows.clone(), width)
+            //    .block(container)
+            //    .highlight_style(Style::default().reversed())
+            //    .header(self.header.clone());
 
             self.scrollbar_state_right = self
                 .scrollbar_state_right
@@ -153,8 +156,15 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
-            frame.render_stateful_widget(table, area, &mut self.table_state);
-
+            let table = CustomTable::default()
+                .block(container)
+                .header_block_style(
+                    Style::default().fg(self.selected_color(true, store.preference.theme_config)),
+                )
+                .header(vec!["Hello".to_string(), "World".to_string()]);
+            let mut state = CustomTableState::default();
+            frame.render_stateful_widget(table, area, &mut state);
+            //frame.render_stateful_widget(table, area, &mut self.table_state);
             frame.render_stateful_widget(
                 scrollbar_right,
                 area.inner(&Margin {

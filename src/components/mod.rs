@@ -18,6 +18,8 @@ pub mod table_list;
 pub mod input_popup;
 pub mod layout;
 
+pub mod widgets;
+
 pub mod command;
 
 pub use command::CommandComponent;
