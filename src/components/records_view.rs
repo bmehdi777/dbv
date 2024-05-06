@@ -16,7 +16,6 @@ pub struct RecordsViewComponent<'a> {
     table_state: TableState,
 
     scrollbar_state_right: ScrollbarState,
-    scrollbar_state_bottom: ScrollbarState,
 }
 
 impl<'a> RecordsViewComponent<'a> {
@@ -27,7 +26,6 @@ impl<'a> RecordsViewComponent<'a> {
             total: None,
             table_state: TableState::default(),
             scrollbar_state_right: ScrollbarState::default(),
-            scrollbar_state_bottom: ScrollbarState::default(),
         }
     }
 
@@ -45,7 +43,6 @@ impl<'a> RecordsViewComponent<'a> {
                 })
                 .collect::<Vec<_>>(),
         );
-        self.scrollbar_state_bottom = self.scrollbar_state_bottom.content_length(header.len());
     }
 
     pub fn set_body(&mut self, content: Vec<AnyRow>, _store: &Store) {
@@ -61,7 +58,8 @@ impl<'a> RecordsViewComponent<'a> {
             ))
         }
         self.rows = rows;
-        self.scrollbar_state_right = self.scrollbar_state_right
+        self.scrollbar_state_right = self
+            .scrollbar_state_right
             .content_length(content.first().unwrap().len());
     }
 
@@ -148,17 +146,12 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                 .highlight_style(Style::default().reversed())
                 .header(self.header.clone());
 
-            self.scrollbar_state_right = self.scrollbar_state_right.viewport_content_length(frame.size().height.into());
+            self.scrollbar_state_right = self
+                .scrollbar_state_right
+                .viewport_content_length(frame.size().height.into());
             let scrollbar_right = Scrollbar::new(ScrollbarOrientation::VerticalRight)
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
-
-            self.scrollbar_state_bottom = self.scrollbar_state_bottom.viewport_content_length(frame.size().width.into());
-            let scrollbar_bottom = Scrollbar::new(ScrollbarOrientation::HorizontalBottom)
-                .begin_symbol(Some("⯇"))
-                .end_symbol(Some("⯈"));
-
-
 
             frame.render_stateful_widget(table, area, &mut self.table_state);
 
@@ -169,14 +162,6 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                     horizontal: 0,
                 }),
                 &mut self.scrollbar_state_right,
-            );
-            frame.render_stateful_widget(
-                scrollbar_bottom,
-                area.inner(&Margin {
-                    vertical: 0,
-                    horizontal: 20,
-                }),
-                &mut self.scrollbar_state_bottom,
             );
         } else {
             let no_data = Paragraph::new("No records").style(Style::new().italic());
