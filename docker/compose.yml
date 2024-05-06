@@ -7,6 +7,10 @@ services:
       - "3306:3306"
     environment:
       MARIADB_ROOT_PASSWORD: password
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
 
 volumes:
   mariadb:

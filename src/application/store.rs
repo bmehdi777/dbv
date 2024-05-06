@@ -12,7 +12,6 @@ const STORE_FILENAME: &'static str = "user_data.json";
 pub enum StoreAction {
     SendDatabaseData(Vec<String>),
     SendTablesData(Vec<String>),
-    SendRecordsData(Vec<AnyRow>),
 
     SendEditConnectionItem(usize),
 
@@ -74,43 +73,6 @@ impl<'a> Store<'a> {
                 self.log(&format!("{:?}", data));
                 self.tables_list = data;
                 self.selected_pane = (0, 2);
-            }
-            StoreAction::SendRecordsData(data) => {
-                let d = data
-                    .get(0)
-                    .unwrap()
-                    .columns()
-                    .iter()
-                    .map(|item| item.name())
-                    .collect::<Vec<_>>();
-                let test = data
-                    .get(1)
-                    .unwrap()
-                    .columns()
-                    .iter()
-                    .map(|item| {
-                        let ord = item.ordinal();
-                        let info = item.type_info().name();
-                        match info {
-                            "TEXT" => return data.get(1).unwrap().get::<String, _>(ord),
-                            "INTEGER" => {
-                                return data.get(1).unwrap().get::<i64, _>(ord).to_string()
-                            }
-                            _ => {
-                                return "NOT IMPLEMENTED".to_string()
-                            }
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                // See following links : 
-                // https://docs.rs/sqlx/latest/sqlx/mysql/types/index.html
-                // https://docs.rs/sqlx/latest/sqlx/sqlite/types/index.html
-                // https://docs.rs/sqlx/latest/sqlx/postgres/types/index.html
-                self.log(&format!("{:?}", d));
-                self.log(&format!("{:?}", test));
-
-                self.selected_pane = (1, 2);
             }
 
             StoreAction::SendError(e) => {

@@ -4,6 +4,7 @@ use crate::{
     events::{events::EventsHandling, key::Keys, EventState},
 };
 use ratatui::{prelude::*, widgets::*, Frame};
+use sqlx::{any::AnyRow, Column, Row, TypeInfo};
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -18,6 +19,8 @@ pub enum AppAction {
     SendResetTableList,
     SendResetRecords,
     SendReset,
+
+    SendRecords((Vec<AnyRow>, Option<i64>)),
 }
 
 pub struct App<'a> {
@@ -184,6 +187,23 @@ impl<'a> App<'a> {
                 self.database_list = DatabaseListComponent::new();
                 self.table_list = TableListComponent::new();
             }
+            AppAction::SendRecords(rows) => {
+                if rows.0.len() > 0 {
+                    let header = rows
+                        .0
+                        .get(0)
+                        .unwrap()
+                        .columns()
+                        .iter()
+                        .map(|item| item.name().to_string())
+                        .collect::<Vec<_>>();
+                    self.records_view.set_header(header, &self.store);
+                    self.records_view.set_body(rows.0, &self.store);
+                    self.records_view.set_total(rows.1);
+
+                    self.store.selected_pane = (1, 1);
+                }
+            }
         }
     }
 
@@ -201,6 +221,9 @@ impl<'a> App<'a> {
             }
             (1, 0) => {
                 self.tab.event(&k, &mut self.store)?;
+            }
+            (1, 1) => {
+                self.records_view.event(&k, &mut self.store)?;
             }
             (1, 2) => {
                 self.log_view.event(&k, &mut self.store)?;
