@@ -2,7 +2,6 @@ use super::{preferences::Preference, user_data::UserData, UpdateAction};
 use crate::{
     components::LogContent, events::events::EventsHandling, sql::database::DatabaseList, utils,
 };
-use sqlx::{any::AnyRow, Column, Row, TypeInfo};
 use std::{fs, path::Path};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 

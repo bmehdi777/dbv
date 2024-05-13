@@ -1,6 +1,5 @@
-use super::parser::SqlParser;
 use crate::application::{AppAction, StoreAction, UpdateAction};
-use sqlx::{Any, Column, Pool, Row};
+use sqlx::{Any, Pool, Row};
 use tokio::{spawn, sync::mpsc::UnboundedSender};
 
 pub struct Records;

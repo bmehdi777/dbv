@@ -1,12 +1,13 @@
 use ratatui::{
-    layout::{Position, Size},
     prelude::*,
     widgets::*,
 };
 
+const MAX_ELEMENT_PER_ROW: usize = 4;
+
 #[derive(Debug, Clone, Default)]
 pub struct CustomTable<'a> {
-    rows: Vec<Vec<String>>,
+    _rows: Vec<Vec<String>>,
     header: Vec<String>,
     block: Block<'a>,
     header_style: Style,
@@ -37,21 +38,31 @@ impl<'a> CustomTable<'a> {
         self
     }
 
-    fn render_header(&self, area: Rect, buf: &mut Buffer) {
+    fn render_header(&self, area: Rect, buf: &mut Buffer, state: &mut CustomTableState) {
         let header_block = Block::default()
             .style(self.header_style)
             .borders(Borders::BOTTOM)
             .border_style(self.header_block_style);
 
-        // make the constraints match the number of item in header : if there is more than 4 (or 3
-        // ?) then make it MAX 4 (or 3?)
-        // else make it fill by the number of item
-        let constraints = [Constraint::Fill(1), Constraint::Fill(1)];
-        let rects = Layout::horizontal(constraints)
+        let constraints = if self.header.len() > MAX_ELEMENT_PER_ROW {
+            vec![
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+            ]
+        } else {
+            self.header
+                .iter()
+                .map(|_| Constraint::Fill(1))
+                .collect::<Vec<_>>()
+        };
+
+        let rects = Layout::horizontal(&constraints)
             .flex(layout::Flex::Center)
             .split(Rect::new(area.x + 1, area.y + 1, area.width, area.height));
-
-        for (index, header_title) in self.header.iter().enumerate() {
+        for index in 0..constraints.len() {
+            let header_title = self.header.get(state.offset_header + index).unwrap();
             let line = Line::from(Span::from(header_title).style(self.header_style));
             line.render(*rects.get(index).unwrap(), buf);
         }
@@ -65,7 +76,7 @@ impl StatefulWidget for CustomTable<'_> {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);
-        self.render_header(area, buf);
+        self.render_header(area, buf, state);
         self.block.render(area, buf);
     }
 }
@@ -73,5 +84,35 @@ impl StatefulWidget for CustomTable<'_> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CustomTableState {
     // (x,y)
-    pub offset: (usize, usize),
+    pub offset_header: usize,
+    pub header_length: usize,
+    pub content_length: usize,
+}
+
+impl CustomTableState {
+    pub fn new(header_length: usize, content_length: usize) -> Self {
+        CustomTableState {
+            offset_header: 0,
+            header_length,
+            content_length,
+        }
+    }
+    pub fn content_length(mut self, content_length: usize) -> Self {
+        self.content_length = content_length;
+        self
+    }
+    pub fn header_length(mut self, header_length: usize) -> Self {
+        self.header_length = header_length;
+        self
+    }
+
+    pub fn next_col(&mut self) {
+        self.offset_header = self
+            .offset_header
+            .saturating_add(1)
+            .min(self.header_length.saturating_sub(MAX_ELEMENT_PER_ROW));
+    }
+    pub fn prev_col(&mut self) {
+        self.offset_header = self.offset_header.saturating_sub(1);
+    }
 }

@@ -19,6 +19,9 @@ pub struct RecordsViewComponent<'a> {
     table_state: TableState,
 
     scrollbar_state_right: ScrollbarState,
+
+    test_header: Vec<String>,
+    test_table_state: CustomTableState,
 }
 
 impl<'a> RecordsViewComponent<'a> {
@@ -29,6 +32,21 @@ impl<'a> RecordsViewComponent<'a> {
             total: None,
             table_state: TableState::default(),
             scrollbar_state_right: ScrollbarState::default(),
+
+            test_header: vec![
+                "1".to_string(),
+                "2".to_string(),
+                "3".to_string(),
+                "4".to_string(),
+                "5".to_string(),
+                "6".to_string(),
+                "7".to_string(),
+                "8".to_string(),
+                "9".to_string(),
+                "10".to_string(),
+                "11".to_string(),
+            ],
+            test_table_state: CustomTableState::new(11, 0),
         }
     }
 
@@ -76,6 +94,13 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
         let rows_len = self.rows.len();
         if rows_len > 0 {
             match input {
+                Keys::Char('h') => {
+                    self.test_table_state.prev_col();
+                }
+                Keys::Char('l') => {
+                    self.test_table_state.next_col();
+                }
+
                 Keys::Char('j') => {
                     if let Some(i) = self.table_state.selected() {
                         let index = if i == rows_len - 1 {
@@ -107,7 +132,6 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                         self.table_state.select(Some(rows_len - 1));
                     }
                 }
-                Keys::Char('l') => {}
                 _ => return Ok(EventState::Wasted),
             }
             return Ok(EventState::Consumed);
@@ -131,8 +155,6 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
             )
             .border_type(BorderType::Rounded);
 
-        let width = vec![Constraint::Fill(1); 4];
-
         if self.rows.len() > 0 {
             if let Some(total) = self.total {
                 let selected = if let Some(i) = self.table_state.selected() {
@@ -144,10 +166,6 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                     .title_bottom(Line::from(format!("Total : {}", total)).right_aligned())
                     .title_bottom(Line::from(format!("{} of {}", selected, self.rows.len())));
             }
-            //let table = Table::new(self.rows.clone(), width)
-            //    .block(container)
-            //    .highlight_style(Style::default().reversed())
-            //    .header(self.header.clone());
 
             self.scrollbar_state_right = self
                 .scrollbar_state_right
@@ -161,10 +179,9 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                 .header_block_style(
                     Style::default().fg(self.selected_color(true, store.preference.theme_config)),
                 )
-                .header(vec!["Hello".to_string(), "World".to_string()]);
-            let mut state = CustomTableState::default();
-            frame.render_stateful_widget(table, area, &mut state);
-            //frame.render_stateful_widget(table, area, &mut self.table_state);
+                .header(self.test_header.clone());
+            frame.render_stateful_widget(table, area, &mut self.test_table_state);
+
             frame.render_stateful_widget(
                 scrollbar_right,
                 area.inner(&Margin {

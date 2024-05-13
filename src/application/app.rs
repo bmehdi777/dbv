@@ -4,7 +4,7 @@ use crate::{
     events::{events::EventsHandling, key::Keys, EventState},
 };
 use ratatui::{prelude::*, widgets::*, Frame};
-use sqlx::{any::AnyRow, Column, Row, TypeInfo};
+use sqlx::{any::AnyRow, Column, Row};
 use std::collections::HashMap;
 
 #[derive(Clone)]
