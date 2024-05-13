@@ -1,7 +1,4 @@
-use ratatui::{
-    prelude::*,
-    widgets::*,
-};
+use ratatui::{prelude::*, widgets::*};
 
 const MAX_ELEMENT_PER_ROW: usize = 4;
 
@@ -62,7 +59,7 @@ impl<'a> CustomTable<'a> {
             .flex(layout::Flex::Center)
             .split(Rect::new(area.x + 1, area.y + 1, area.width, area.height));
         for index in 0..constraints.len() {
-            let header_title = self.header.get(state.offset_header + index).unwrap();
+            let header_title = self.header.get(state.offset_x + index).unwrap();
             let line = Line::from(Span::from(header_title).style(self.header_style));
             line.render(*rects.get(index).unwrap(), buf);
         }
@@ -84,7 +81,8 @@ impl StatefulWidget for CustomTable<'_> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CustomTableState {
     // (x,y)
-    pub offset_header: usize,
+    pub offset_x: usize,
+    pub offset_y: usize,
     pub header_length: usize,
     pub content_length: usize,
 }
@@ -92,7 +90,8 @@ pub struct CustomTableState {
 impl CustomTableState {
     pub fn new(header_length: usize, content_length: usize) -> Self {
         CustomTableState {
-            offset_header: 0,
+            offset_x: 0,
+            offset_y: 0,
             header_length,
             content_length,
         }
@@ -107,12 +106,21 @@ impl CustomTableState {
     }
 
     pub fn next_col(&mut self) {
-        self.offset_header = self
-            .offset_header
+        self.offset_x = self
+            .offset_x
             .saturating_add(1)
             .min(self.header_length.saturating_sub(MAX_ELEMENT_PER_ROW));
     }
     pub fn prev_col(&mut self) {
-        self.offset_header = self.offset_header.saturating_sub(1);
+        self.offset_x = self.offset_x.saturating_sub(1);
+    }
+    pub fn next_row(&mut self) {
+        self.offset_y = self
+            .offset_y
+            .saturating_add(1)
+            .min(self.content_length.saturating_sub(1));
+    }
+    pub fn prev_row(&mut self) {
+        self.offset_y = self.offset_y.saturating_sub(1);
     }
 }
