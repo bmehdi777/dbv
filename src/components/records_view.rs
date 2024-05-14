@@ -45,6 +45,7 @@ impl<'a> RecordsViewComponent<'a> {
                 "9".to_string(),
                 "10".to_string(),
                 "11".to_string(),
+                "12".to_string(),
             ],
             test_table_state: CustomTableState::new(11, 0),
         }
