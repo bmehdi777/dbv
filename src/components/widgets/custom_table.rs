@@ -58,9 +58,16 @@ impl<'a> CustomTable<'a> {
         let rects = Layout::horizontal(&constraints)
             .flex(layout::Flex::Center)
             .split(Rect::new(area.x + 1, area.y + 1, area.width, area.height));
+        let base_pos = state.position_x / MAX_ELEMENT_PER_ROW;
+        println!("{base_pos}");
+
         for index in 0..constraints.len() {
-            let header_title = self.header.get(state.offset_x + index).unwrap();
-            let line = Line::from(Span::from(header_title).style(self.header_style));
+            let header_title = self.header.get(base_pos + index).unwrap();
+            let mut line = Line::from(Span::from(header_title).style(self.header_style));
+            // TODO: make the span selected highlighted
+            if base_pos == state.position_x {
+                line = Line::from(Span::from(header_title).style(self.header_style).bg(Color::Cyan));
+            }
             line.render(*rects.get(index).unwrap(), buf);
         }
 
@@ -81,8 +88,8 @@ impl StatefulWidget for CustomTable<'_> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CustomTableState {
     // (x,y)
-    pub offset_x: usize,
-    pub offset_y: usize,
+    pub position_x: usize,
+    pub position_y: usize,
     pub header_length: usize,
     pub content_length: usize,
 }
@@ -90,8 +97,8 @@ pub struct CustomTableState {
 impl CustomTableState {
     pub fn new(header_length: usize, content_length: usize) -> Self {
         CustomTableState {
-            offset_x: 0,
-            offset_y: 0,
+            position_x: 0,
+            position_y: 0,
             header_length,
             content_length,
         }
@@ -106,21 +113,21 @@ impl CustomTableState {
     }
 
     pub fn next_col(&mut self) {
-        self.offset_x = self
-            .offset_x
+        self.position_x = self
+            .position_x
             .saturating_add(1)
             .min(self.header_length.saturating_sub(MAX_ELEMENT_PER_ROW));
     }
     pub fn prev_col(&mut self) {
-        self.offset_x = self.offset_x.saturating_sub(1);
+        self.position_x = self.position_x.saturating_sub(1);
     }
     pub fn next_row(&mut self) {
-        self.offset_y = self
-            .offset_y
+        self.position_y = self
+            .position_y
             .saturating_add(1)
             .min(self.content_length.saturating_sub(1));
     }
     pub fn prev_row(&mut self) {
-        self.offset_y = self.offset_y.saturating_sub(1);
+        self.position_y = self.position_y.saturating_sub(1);
     }
 }
