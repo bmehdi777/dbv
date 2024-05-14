@@ -1,7 +1,5 @@
 use ratatui::{prelude::*, widgets::*};
 
-const MAX_ELEMENT_PER_ROW: usize = 4;
-
 #[derive(Debug, Clone, Default)]
 pub struct CustomTable<'a> {
     _rows: Vec<Vec<String>>,
@@ -41,7 +39,7 @@ impl<'a> CustomTable<'a> {
             .borders(Borders::BOTTOM)
             .border_style(self.header_block_style);
 
-        let constraints = if self.header.len() > MAX_ELEMENT_PER_ROW {
+        let constraints = if self.header.len() > state.max_element_row {
             vec![
                 Constraint::Fill(1),
                 Constraint::Fill(1),
@@ -64,6 +62,7 @@ impl<'a> CustomTable<'a> {
             let mut line = Line::from(Span::from(header_title).style(self.header_style));
 
             if state.position_x == index {
+                // highlight of col selected
                 line = Line::from(
                     Span::from(header_title)
                         .style(self.header_style)
@@ -94,16 +93,21 @@ pub struct CustomTableState {
     pub position_y: usize,
     pub header_length: usize,
     pub content_length: usize,
+
+    pub max_element_row: usize,
 }
 
 impl CustomTableState {
     pub fn new(header_length: usize, content_length: usize) -> Self {
+        let max_element_row = if header_length > 4 { 4 } else { header_length };
+        println!("{}", max_element_row);
         CustomTableState {
             offset_x: 0,
             position_x: 0,
             position_y: 0,
             header_length,
             content_length,
+            max_element_row,
         }
     }
     pub fn content_length(mut self, content_length: usize) -> Self {
@@ -116,9 +120,9 @@ impl CustomTableState {
     }
 
     pub fn next_col(&mut self) {
-        if self.position_x == MAX_ELEMENT_PER_ROW - 1 {
-            self.position_x = MAX_ELEMENT_PER_ROW - 1;
-            if self.offset_x + self.position_x < self.header_length {
+        if self.position_x == self.max_element_row - 1 {
+            self.position_x = self.max_element_row - 1;
+            if self.offset_x + self.position_x < self.header_length - 1 {
                 self.offset_x = self.offset_x.saturating_add(1);
             }
         } else {
