@@ -97,25 +97,15 @@ impl<'a> CustomTable<'a> {
     fn render_rows(&self, area: Rect, buf: &mut Buffer, state: &mut CustomTableState) {
         let max_item_to_display = (area.height - 3) as usize;
         let col_size = ((area.width - 1) as usize / MAX_ELEMENT_ROW) as u16;
-        let constraints_row = Constraint::from_fills(vec![1; max_item_to_display]);
-        let rect = Layout::vertical(constraints_row)
-            .flex(layout::Flex::Start)
-            .split(Rect::new(
-                area.x + 1,
-                area.y + 3,
-                area.width - 1,
-                area.height - 3,
-            ));
 
         for (row_index, result) in self.rows[state.offset_y..max_item_to_display]
             .iter()
             .enumerate()
         {
-            let y_rect = rect.get(row_index).unwrap();
             for col_index in 0..self.constraints_col.len() {
                 let item_rect = Rect::new(
-                    area.x+1 + (col_index as u16) * col_size,
-                    y_rect.y,
+                    area.x + 1 + (col_index as u16) * col_size,
+                    area.y + 3 + row_index as u16,
                     col_size,
                     1,
                 );

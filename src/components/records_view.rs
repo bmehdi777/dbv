@@ -142,12 +142,6 @@ impl<'a> MutableComponent for RecordsViewComponent {
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
-            let rows_len = if self.rows.len() > 0 {
-                self.rows.get(0).unwrap().len()
-            } else {
-                0
-            };
-            let mut table_state = CustomTableState::new(self.header.len(), rows_len);
             let table = CustomTable::default()
                 .block(container)
                 .header_block_style(
@@ -156,7 +150,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
                 .header(self.header.clone())
                 .rows(self.rows.clone());
 
-            frame.render_stateful_widget(table, area, &mut table_state);
+            frame.render_stateful_widget(table, area, &mut self.table_state);
 
             frame.render_stateful_widget(
                 scrollbar_right,
