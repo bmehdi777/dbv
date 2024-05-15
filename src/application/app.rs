@@ -1,5 +1,6 @@
 use super::{Store, StoreAction};
 use crate::{
+    components::widgets::fps_counter::FpsCounter,
     components::*,
     events::{events::EventsHandling, key::Keys, EventState},
 };
@@ -34,6 +35,8 @@ pub struct App<'a> {
     help_view: HelpViewComponent,
     log_view: LogViewComponent,
 
+    fps_counter: FpsCounter,
+
     max_pane_column: [u8; 2],
     pub store: Store<'a>,
 }
@@ -64,6 +67,8 @@ impl<'a> App<'a> {
 
             help_text,
             help_view,
+
+            fps_counter: FpsCounter::default(),
 
             max_pane_column: [3, 3],
             store,
@@ -140,8 +145,11 @@ impl<'a> App<'a> {
             &layout,
         )?;
 
-        self.help_text
-            .draw(frame, layout.main_area[1], false, &self.store)?;
+        #[cfg(not(debug_assertions))]
+        self.help_text.draw(frame, layout.main_area[1], false, &self.store)?;
+
+        #[cfg(debug_assertions)]
+        self.fps_counter.draw(frame, layout.main_area[1])?;
 
         match self.store.selected_pane {
             (100, 100) => {
@@ -156,10 +164,12 @@ impl<'a> App<'a> {
             _ => {}
         }
 
+
         Ok(())
     }
 
     pub fn update(&mut self) {
+        self.fps_counter.app_tick();
         while let Ok(action) = self.store.actions_rx.try_recv() {
             match action {
                 UpdateAction::SendStoreAction(act) => {
