@@ -1,5 +1,5 @@
 use anyhow::Result;
-use ratatui::{prelude::*, widgets::*};
+use ratatui::prelude::*;
 use std::time::Instant;
 
 pub struct FpsCounter {

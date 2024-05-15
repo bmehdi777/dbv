@@ -31,10 +31,12 @@ pub struct App<'a> {
     table_list: TableListComponent,
     command: CommandComponent,
     records_view: RecordsViewComponent,
-    help_text: HelpTextComponent,
     help_view: HelpViewComponent,
     log_view: LogViewComponent,
 
+    #[cfg(not(debug_assertions))]
+    help_text: HelpTextComponent,
+    #[cfg(debug_assertions)]
     fps_counter: FpsCounter,
 
     max_pane_column: [u8; 2],
@@ -49,7 +51,6 @@ impl<'a> App<'a> {
         let table_list = TableListComponent::new();
         let command = CommandComponent::new();
         let records_view = RecordsViewComponent::new();
-        let help_text = HelpTextComponent::new();
         let help_view =
             HelpViewComponent::new(0, "Connections list".into(), App::help_view_text((0, 0)));
         let log_view = LogViewComponent::new();
@@ -65,9 +66,11 @@ impl<'a> App<'a> {
             log_view,
             command,
 
-            help_text,
             help_view,
 
+            #[cfg(not(debug_assertions))]
+            help_text: HelpTextComponent::new(),
+            #[cfg(debug_assertions)]
             fps_counter: FpsCounter::default(),
 
             max_pane_column: [3, 3],
@@ -146,7 +149,8 @@ impl<'a> App<'a> {
         )?;
 
         #[cfg(not(debug_assertions))]
-        self.help_text.draw(frame, layout.main_area[1], false, &self.store)?;
+        self.help_text
+            .draw(frame, layout.main_area[1], false, &self.store)?;
 
         #[cfg(debug_assertions)]
         self.fps_counter.draw(frame, layout.main_area[1])?;
@@ -163,7 +167,6 @@ impl<'a> App<'a> {
             }
             _ => {}
         }
-
 
         Ok(())
     }
@@ -208,7 +211,7 @@ impl<'a> App<'a> {
                         .map(|item| item.name().to_string())
                         .collect::<Vec<String>>();
                     self.records_view.set_header(header);
-                    self.records_view.set_body(rows.0,&mut self.store);
+                    self.records_view.set_body(rows.0, &mut self.store);
                     self.records_view.set_total(rows.1);
 
                     self.store.selected_pane = (1, 1);
