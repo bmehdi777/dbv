@@ -33,6 +33,7 @@ impl<'a> RecordsViewComponent {
     }
 
     pub fn set_header(&mut self, header: Vec<String>) {
+        self.table_state = self.table_state.header_length(header.len());
         self.header = header;
     }
 
@@ -48,10 +49,10 @@ impl<'a> RecordsViewComponent {
                     .collect::<Vec<String>>(),
             )
         }
+        let content_length = content.len();
         self.rows = rows;
-        self.scrollbar_state_right = self
-            .scrollbar_state_right
-            .content_length(content.first().unwrap().len());
+        self.scrollbar_state_right = self.scrollbar_state_right.content_length(content_length);
+        self.table_state = self.table_state.content_length(content_length);
     }
 
     pub fn set_total(&mut self, total: Option<i64>) {
@@ -73,7 +74,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
 
                 Keys::Char('j') => {
                     if let Some((_x, y)) = self.table_state.selected() {
-                        let _index = if y == rows_len - 1 {
+                        if y == rows_len - 1 {
                             self.scrollbar_state_right.first();
                             0
                         } else {
@@ -87,14 +88,13 @@ impl<'a> MutableComponent for RecordsViewComponent {
                 }
                 Keys::Char('k') => {
                     if let Some((_x, y)) = self.table_state.selected() {
-                        let _index = if y == 0 {
+                        if y == 0 {
                             self.scrollbar_state_right.last();
                             rows_len - 1
                         } else {
                             self.scrollbar_state_right.prev();
                             y - 1
                         };
-                        self.table_state.prev_row();
                     } else {
                         self.scrollbar_state_right.last();
                     }
@@ -114,7 +114,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
         area: Rect,
         selected: bool,
         store: &Store,
-        _layout: &LayoutArea,
+        layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let mut container = Block::default()
             .borders(Borders::ALL)
@@ -125,7 +125,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
 
         if self.rows.len() > 0 {
             if let Some(total) = self.total {
-                let selected = if let Some((_,y)) = self.table_state.selected() {
+                let selected = if let Some((_, y)) = self.table_state.selected() {
                     y + 1
                 } else {
                     0
@@ -142,7 +142,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
-            let table = CustomTable::default()
+            let table = CustomTable::new(&layout)
                 .block(container)
                 .header_block_style(
                     Style::default().fg(self.selected_color(true, store.preference.theme_config)),

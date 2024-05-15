@@ -1,8 +1,9 @@
+use crate::components::LayoutArea;
 use ratatui::{prelude::*, widgets::*};
 
 const MAX_ELEMENT_ROW: usize = 4;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone)]
 pub struct CustomTable<'a> {
     rows: Vec<Vec<String>>,
     header: Vec<String>,
@@ -12,17 +13,34 @@ pub struct CustomTable<'a> {
     rows_style: Style,
     highlight_style: Style,
     style: Style,
+    layout_area: &'a LayoutArea,
 
     constraints_col: Vec<Constraint>,
 }
 
 impl<'a> CustomTable<'a> {
+    pub fn new(layout_area: &'a LayoutArea) -> Self {
+        CustomTable {
+            rows: Vec::new(),
+            header: Vec::new(),
+            block: Block::default(),
+            header_style: Style::default(),
+            header_block_style: Style::default(),
+            rows_style: Style::default(),
+            highlight_style: Style::default(),
+            style: Style::default(),
+            constraints_col: Vec::new(),
+            layout_area,
+        }
+    }
+
     pub fn block(mut self, block: Block<'a>) -> Self {
         self.block = block;
         self
     }
     pub fn header(mut self, header: Vec<String>) -> Self {
         self.header = header;
+
         self.constraints_col = if self.header.len() > MAX_ELEMENT_ROW {
             vec![
                 Constraint::Fill(1),
@@ -98,7 +116,8 @@ impl<'a> CustomTable<'a> {
         let max_item_to_display = (area.height - 3) as usize;
         let col_size = ((area.width - 1) as usize / MAX_ELEMENT_ROW) as u16;
 
-        for (row_index, result) in self.rows[state.offset_y..max_item_to_display]
+        for (row_index, result) in self.rows
+            [state.offset_y..state.offset_y + max_item_to_display]
             .iter()
             .enumerate()
         {
@@ -148,12 +167,15 @@ pub struct CustomTableState {
     pub header_length: usize,
     pub content_length: usize,
 
-    pub max_element_row: usize,
+    pub max_element_in_row: usize,
+    // we need something like this to ensure we scroll down
+    // but we only get the max element to display through area size
+    //pub max_element_in_col: usize,
 }
 
 impl CustomTableState {
     pub fn new(header_length: usize, content_length: usize) -> Self {
-        let max_element_row = if header_length > MAX_ELEMENT_ROW {
+        let max_element_in_row = if header_length > MAX_ELEMENT_ROW {
             MAX_ELEMENT_ROW
         } else {
             header_length
@@ -164,7 +186,7 @@ impl CustomTableState {
             position: None,
             header_length,
             content_length,
-            max_element_row,
+            max_element_in_row,
         }
     }
     pub fn content_length(mut self, content_length: usize) -> Self {
@@ -173,12 +195,18 @@ impl CustomTableState {
     }
     pub fn header_length(mut self, header_length: usize) -> Self {
         self.header_length = header_length;
+        let max_element_row = if header_length > MAX_ELEMENT_ROW {
+            MAX_ELEMENT_ROW
+        } else {
+            header_length
+        };
+        self.max_element_in_row = max_element_row;
         self
     }
 
     pub fn next_col(&mut self) {
         if let Some((pos, y)) = self.position {
-            if pos == self.max_element_row - 1 {
+            if pos == self.max_element_in_row - 1 {
                 if self.offset_x + pos < self.header_length - 1 {
                     self.offset_x = self.offset_x.saturating_add(1);
                 }
@@ -199,22 +227,23 @@ impl CustomTableState {
     }
     pub fn next_row(&mut self) {
         if let Some((x, pos)) = self.position {
-            self.position = Some((
-                x,
-                pos.saturating_add(1)
-                    .min(self.content_length.saturating_sub(1)),
-            ));
+            if pos == 28 {
+                if self.offset_y + pos < self.content_length - 1 {
+                    self.offset_y = self.offset_y.saturating_add(1);
+                }
+            } else {
+                self.position = Some((x, pos.saturating_add(1)));
+            }
         } else {
             self.position = Some((0, 0));
         }
     }
     pub fn prev_row(&mut self) {
         if let Some((x, pos)) = self.position {
-            self.position = Some((
-                x,
-                pos.saturating_add(1)
-                    .min(self.content_length.saturating_sub(1)),
-            ));
+            if pos == 0 {
+                self.offset_y = self.offset_y.saturating_sub(1);
+            }
+            self.position = Some((x, pos.saturating_sub(1)));
         } else {
             self.position = Some((0, 0));
         }
