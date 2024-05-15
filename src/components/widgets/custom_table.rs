@@ -1,14 +1,19 @@
 use ratatui::{prelude::*, widgets::*};
 
+const MAX_ELEMENT_ROW: usize = 4;
+
 #[derive(Debug, Clone, Default)]
 pub struct CustomTable<'a> {
-    _rows: Vec<Vec<String>>,
+    rows: Vec<Vec<String>>,
     header: Vec<String>,
     block: Block<'a>,
     header_style: Style,
     header_block_style: Style,
+    rows_style: Style,
     highlight_style: Style,
     style: Style,
+
+    constraints_col: Vec<Constraint>,
 }
 
 impl<'a> CustomTable<'a> {
@@ -18,6 +23,23 @@ impl<'a> CustomTable<'a> {
     }
     pub fn header(mut self, header: Vec<String>) -> Self {
         self.header = header;
+        self.constraints_col = if self.header.len() > MAX_ELEMENT_ROW {
+            vec![
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+                Constraint::Fill(1),
+            ]
+        } else {
+            self.header
+                .iter()
+                .map(|_| Constraint::Fill(1))
+                .collect::<Vec<_>>()
+        };
+        self
+    }
+    pub fn rows(mut self, rows: Vec<Vec<String>>) -> Self {
+        self.rows = rows;
         self
     }
     pub fn highlight_style(mut self, style: Style) -> Self {
@@ -26,6 +48,10 @@ impl<'a> CustomTable<'a> {
     }
     pub fn header_style(mut self, style: Style) -> Self {
         self.header_style = style;
+        self
+    }
+    pub fn rows_style(mut self, style: Style) -> Self {
+        self.rows_style = style;
         self
     }
     pub fn header_block_style(mut self, style: Style) -> Self {
@@ -39,40 +65,75 @@ impl<'a> CustomTable<'a> {
             .borders(Borders::BOTTOM)
             .border_style(self.header_block_style);
 
-        let constraints = if self.header.len() > state.max_element_row {
-            vec![
-                Constraint::Fill(1),
-                Constraint::Fill(1),
-                Constraint::Fill(1),
-                Constraint::Fill(1),
-            ]
-        } else {
-            self.header
-                .iter()
-                .map(|_| Constraint::Fill(1))
-                .collect::<Vec<_>>()
-        };
-
-        let rects = Layout::horizontal(&constraints)
+        let rects = Layout::horizontal(&self.constraints_col)
             .flex(layout::Flex::Center)
-            .split(Rect::new(area.x + 1, area.y + 1, area.width, area.height));
+            .split(Rect::new(
+                area.x + 1,
+                area.y + 1,
+                area.width - 1,
+                area.height - 1,
+            ));
 
-        for index in 0..constraints.len() {
+        for index in 0..self.constraints_col.len() {
             let header_title = self.header.get(state.offset_x + index).unwrap();
             let mut line = Line::from(Span::from(header_title).style(self.header_style));
 
-            if state.position_x == index {
-                // highlight of col selected
-                line = Line::from(
-                    Span::from(header_title)
-                        .style(self.header_style)
-                        .bg(Color::Cyan),
-                );
+            if let Some((x, y)) = state.position {
+                if x == index && y == 0 {
+                    // highlight of col selected
+                    line = Line::from(
+                        Span::from(header_title)
+                            .style(self.highlight_style)
+                            .bg(Color::Cyan),
+                    );
+                }
             }
             line.render(*rects.get(index).unwrap(), buf);
         }
 
         header_block.render(Rect::new(area.x, area.y, area.width - 2, 3), buf);
+    }
+
+    fn render_rows(&self, area: Rect, buf: &mut Buffer, state: &mut CustomTableState) {
+        let max_item_to_display = (area.height - 3) as usize;
+        let col_size = ((area.width - 1) as usize / MAX_ELEMENT_ROW) as u16;
+        let constraints_row = Constraint::from_fills(vec![1; max_item_to_display]);
+        let rect = Layout::vertical(constraints_row)
+            .flex(layout::Flex::Start)
+            .split(Rect::new(
+                area.x + 1,
+                area.y + 3,
+                area.width - 1,
+                area.height - 3,
+            ));
+
+        for (row_index, result) in self.rows[state.offset_y..max_item_to_display]
+            .iter()
+            .enumerate()
+        {
+            let y_rect = rect.get(row_index).unwrap();
+            for col_index in 0..self.constraints_col.len() {
+                let item_rect = Rect::new(
+                    area.x+1 + (col_index as u16) * col_size,
+                    y_rect.y,
+                    col_size,
+                    1,
+                );
+                let content = result.get(state.offset_x + col_index).unwrap();
+                let mut line = Line::from(Span::from(content).style(self.rows_style));
+
+                if let Some((x, y)) = state.position {
+                    if x == col_index && y == row_index + 1 {
+                        line = Line::from(
+                            Span::from(content)
+                                .style(self.highlight_style)
+                                .bg(Color::Cyan),
+                        );
+                    }
+                }
+                line.render(item_rect, buf);
+            }
+        }
     }
 }
 
@@ -81,7 +142,10 @@ impl StatefulWidget for CustomTable<'_> {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);
+
         self.render_header(area, buf, state);
+        self.render_rows(area, buf, state);
+
         self.block.render(area, buf);
     }
 }
@@ -89,8 +153,8 @@ impl StatefulWidget for CustomTable<'_> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CustomTableState {
     pub offset_x: usize,
-    pub position_x: usize,
-    pub position_y: usize,
+    pub offset_y: usize,
+    pub position: Option<(usize, usize)>,
     pub header_length: usize,
     pub content_length: usize,
 
@@ -99,12 +163,15 @@ pub struct CustomTableState {
 
 impl CustomTableState {
     pub fn new(header_length: usize, content_length: usize) -> Self {
-        let max_element_row = if header_length > 4 { 4 } else { header_length };
-        println!("{}", max_element_row);
+        let max_element_row = if header_length > MAX_ELEMENT_ROW {
+            MAX_ELEMENT_ROW
+        } else {
+            header_length
+        };
         CustomTableState {
             offset_x: 0,
-            position_x: 0,
-            position_y: 0,
+            offset_y: 0,
+            position: None,
             header_length,
             content_length,
             max_element_row,
@@ -120,28 +187,53 @@ impl CustomTableState {
     }
 
     pub fn next_col(&mut self) {
-        if self.position_x == self.max_element_row - 1 {
-            self.position_x = self.max_element_row - 1;
-            if self.offset_x + self.position_x < self.header_length - 1 {
-                self.offset_x = self.offset_x.saturating_add(1);
+        if let Some((pos, y)) = self.position {
+            if pos == self.max_element_row - 1 {
+                if self.offset_x + pos < self.header_length - 1 {
+                    self.offset_x = self.offset_x.saturating_add(1);
+                }
+            } else {
+                self.position = Some((pos.saturating_add(1), y));
             }
         } else {
-            self.position_x = self.position_x.saturating_add(1);
+            self.position = Some((0, 0));
         }
     }
     pub fn prev_col(&mut self) {
-        if self.position_x == 0 {
-            self.offset_x = self.offset_x.saturating_sub(1);
+        if let Some((pos, y)) = self.position {
+            if pos == 0 {
+                self.offset_x = self.offset_x.saturating_sub(1);
+            }
+            self.position = Some((pos.saturating_sub(1), y));
         }
-        self.position_x = self.position_x.saturating_sub(1);
     }
     pub fn next_row(&mut self) {
-        self.position_y = self
-            .position_y
-            .saturating_add(1)
-            .min(self.content_length.saturating_sub(1));
+        if let Some((x, pos)) = self.position {
+            self.position = Some((
+                x,
+                pos.saturating_add(1)
+                    .min(self.content_length.saturating_sub(1)),
+            ));
+        } else {
+            self.position = Some((0, 0));
+        }
     }
     pub fn prev_row(&mut self) {
-        self.position_y = self.position_y.saturating_sub(1);
+        if let Some((x, pos)) = self.position {
+            self.position = Some((
+                x,
+                pos.saturating_add(1)
+                    .min(self.content_length.saturating_sub(1)),
+            ));
+        } else {
+            self.position = Some((0, 0));
+        }
+    }
+
+    pub fn selected(&self) -> Option<(usize, usize)> {
+        self.position
+    }
+    pub fn select(&mut self, new_pos: Option<(usize, usize)>) {
+        self.position = new_pos;
     }
 }

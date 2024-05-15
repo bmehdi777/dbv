@@ -29,7 +29,7 @@ pub struct App<'a> {
     database_list: DatabaseListComponent,
     table_list: TableListComponent,
     command: CommandComponent,
-    records_view: RecordsViewComponent<'a>,
+    records_view: RecordsViewComponent,
     help_text: HelpTextComponent,
     help_view: HelpViewComponent,
     log_view: LogViewComponent,
@@ -196,9 +196,9 @@ impl<'a> App<'a> {
                         .columns()
                         .iter()
                         .map(|item| item.name().to_string())
-                        .collect::<Vec<_>>();
-                    self.records_view.set_header(header, &self.store);
-                    self.records_view.set_body(rows.0, &self.store);
+                        .collect::<Vec<String>>();
+                    self.records_view.set_header(header);
+                    self.records_view.set_body(rows.0,&mut self.store);
                     self.records_view.set_total(rows.1);
 
                     self.store.selected_pane = (1, 1);

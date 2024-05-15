@@ -11,73 +11,42 @@ use crate::{
 use ratatui::{prelude::*, widgets::*};
 use sqlx::{any::AnyRow, Row as SqlRow};
 
-pub struct RecordsViewComponent<'a> {
-    header: Row<'a>,
-    rows: Vec<Row<'a>>,
+pub struct RecordsViewComponent {
+    header: Vec<String>,
+    rows: Vec<Vec<String>>,
     total: Option<i64>,
 
-    table_state: TableState,
+    table_state: CustomTableState,
 
     scrollbar_state_right: ScrollbarState,
-
-    test_header: Vec<String>,
-    test_table_state: CustomTableState,
 }
 
-impl<'a> RecordsViewComponent<'a> {
+impl<'a> RecordsViewComponent {
     pub fn new() -> Self {
         RecordsViewComponent {
-            header: Row::default(),
+            header: Vec::new(),
             rows: Vec::new(),
             total: None,
-            table_state: TableState::default(),
+            table_state: CustomTableState::default(),
             scrollbar_state_right: ScrollbarState::default(),
-
-            test_header: vec![
-                "1".to_string(),
-                "2".to_string(),
-                "3".to_string(),
-                "4".to_string(),
-                "5".to_string(),
-                "6".to_string(),
-                "7".to_string(),
-                "8".to_string(),
-                "9".to_string(),
-                "10".to_string(),
-                "11".to_string(),
-                "12".to_string(),
-            ],
-            test_table_state: CustomTableState::new(12, 0),
         }
     }
 
-    pub fn set_header(&mut self, header: Vec<String>, store: &Store) {
-        let color = Color::Rgb(
-            store.preference.theme_config.selected_color[0],
-            store.preference.theme_config.selected_color[1],
-            store.preference.theme_config.selected_color[2],
-        );
-        self.header = Row::new(
-            header
-                .iter()
-                .map(|item| {
-                    Cell::from(item.clone()).style(Style::default().fg(Color::White).bg(color))
-                })
-                .collect::<Vec<_>>(),
-        );
+    pub fn set_header(&mut self, header: Vec<String>) {
+        self.header = header;
     }
 
-    pub fn set_body(&mut self, content: Vec<AnyRow>, _store: &Store) {
-        let mut rows: Vec<Row> = Vec::new();
+    pub fn set_body(&mut self, content: Vec<AnyRow>, store: &mut Store) {
+        let mut rows: Vec<Vec<String>> = Vec::new();
         for r in content.iter() {
-            rows.push(Row::new(
+            rows.push(
                 r.columns()
                     .iter()
                     .map(|col| {
                         return SqlParser::convert_from_sqlx_row(&col, &r);
                     })
-                    .collect::<Vec<_>>(),
-            ))
+                    .collect::<Vec<String>>(),
+            )
         }
         self.rows = rows;
         self.scrollbar_state_right = self
@@ -90,48 +59,46 @@ impl<'a> RecordsViewComponent<'a> {
     }
 }
 
-impl<'a> MutableComponent for RecordsViewComponent<'a> {
+impl<'a> MutableComponent for RecordsViewComponent {
     fn event(&mut self, input: &Keys, _store: &mut Store) -> anyhow::Result<EventState> {
         let rows_len = self.rows.len();
         if rows_len > 0 {
             match input {
                 Keys::Char('h') => {
-                    self.test_table_state.prev_col();
+                    self.table_state.prev_col();
                 }
                 Keys::Char('l') => {
-                    self.test_table_state.next_col();
+                    self.table_state.next_col();
                 }
 
                 Keys::Char('j') => {
-                    if let Some(i) = self.table_state.selected() {
-                        let index = if i == rows_len - 1 {
+                    if let Some((_x, y)) = self.table_state.selected() {
+                        let _index = if y == rows_len - 1 {
                             self.scrollbar_state_right.first();
                             0
                         } else {
                             self.scrollbar_state_right.next();
-                            i + 1
+                            y + 1
                         };
-
-                        self.table_state.select(Some(index));
                     } else {
                         self.scrollbar_state_right.first();
-                        self.table_state.select(Some(0));
                     }
+                    self.table_state.next_row();
                 }
                 Keys::Char('k') => {
-                    if let Some(i) = self.table_state.selected() {
-                        let index = if i == 0 {
+                    if let Some((_x, y)) = self.table_state.selected() {
+                        let _index = if y == 0 {
                             self.scrollbar_state_right.last();
                             rows_len - 1
                         } else {
                             self.scrollbar_state_right.prev();
-                            i - 1
+                            y - 1
                         };
-                        self.table_state.select(Some(index));
+                        self.table_state.prev_row();
                     } else {
                         self.scrollbar_state_right.last();
-                        self.table_state.select(Some(rows_len - 1));
                     }
+                    self.table_state.prev_row();
                 }
                 _ => return Ok(EventState::Wasted),
             }
@@ -158,8 +125,8 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
 
         if self.rows.len() > 0 {
             if let Some(total) = self.total {
-                let selected = if let Some(i) = self.table_state.selected() {
-                    i + 1
+                let selected = if let Some((_,y)) = self.table_state.selected() {
+                    y + 1
                 } else {
                     0
                 };
@@ -175,13 +142,21 @@ impl<'a> MutableComponent for RecordsViewComponent<'a> {
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
+            let rows_len = if self.rows.len() > 0 {
+                self.rows.get(0).unwrap().len()
+            } else {
+                0
+            };
+            let mut table_state = CustomTableState::new(self.header.len(), rows_len);
             let table = CustomTable::default()
                 .block(container)
                 .header_block_style(
                     Style::default().fg(self.selected_color(true, store.preference.theme_config)),
                 )
-                .header(self.test_header.clone());
-            frame.render_stateful_widget(table, area, &mut self.test_table_state);
+                .header(self.header.clone())
+                .rows(self.rows.clone());
+
+            frame.render_stateful_widget(table, area, &mut table_state);
 
             frame.render_stateful_widget(
                 scrollbar_right,
