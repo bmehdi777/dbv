@@ -2,6 +2,15 @@ use sqlx::{any::AnyRow, postgres::any::AnyColumn, Column, Row, TypeInfo};
 
 pub struct SqlParser;
 
+
+/*
+* We have a problem with this parser currently : 
+*
+* As we don't know the type of the _Row_, we can't totaly parse the row.
+* For example, if the Row was a Mysql one, we would be able to parse the TIMESTAMP field
+* but as we have an AnyRow, we can't...
+*/
+
 impl SqlParser {
     // See following links : 
     // https://docs.rs/sqlx/latest/sqlx/mysql/types/index.html
@@ -22,6 +31,7 @@ impl SqlParser {
             "DOUBLE" => return row.get::<f64, _>(ord).to_string(),
             "VARCHAR" | "CHAR" | "TEXT" | "INET4" | "INET6" => return row.get::<_, _>(ord),
             "VARBINARY" | "BINARY" | "BLOB" => return "BLOB...".to_string(),
+            
 
             //sqlite types
             "BOOLEAN" => return row.get::<bool, _>(ord).to_string(),
