@@ -172,7 +172,9 @@ impl<'a> App<'a> {
     }
 
     pub fn update(&mut self) {
+        #[cfg(debug_assertions)]
         self.fps_counter.app_tick();
+
         while let Ok(action) = self.store.actions_rx.try_recv() {
             match action {
                 UpdateAction::SendStoreAction(act) => {
@@ -211,7 +213,7 @@ impl<'a> App<'a> {
                         .map(|item| item.name().to_string())
                         .collect::<Vec<String>>();
                     self.records_view.set_header(header);
-                    self.records_view.set_body(rows.0, &mut self.store);
+                    self.records_view.set_body(rows.0);
                     self.records_view.set_total(rows.1);
 
                     self.store.selected_pane = (1, 1);

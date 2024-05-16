@@ -1,4 +1,3 @@
-use crate::components::LayoutArea;
 use ratatui::{prelude::*, widgets::*};
 
 const MAX_ELEMENT_ROW: usize = 4;
@@ -13,13 +12,12 @@ pub struct CustomTable<'a> {
     rows_style: Style,
     highlight_style: Style,
     style: Style,
-    layout_area: &'a LayoutArea,
 
     constraints_col: Vec<Constraint>,
 }
 
 impl<'a> CustomTable<'a> {
-    pub fn new(layout_area: &'a LayoutArea) -> Self {
+    pub fn new() -> Self {
         CustomTable {
             rows: Vec::new(),
             header: Vec::new(),
@@ -30,7 +28,6 @@ impl<'a> CustomTable<'a> {
             highlight_style: Style::default(),
             style: Style::default(),
             constraints_col: Vec::new(),
-            layout_area,
         }
     }
 
@@ -99,11 +96,7 @@ impl<'a> CustomTable<'a> {
             if let Some((x, y)) = state.position {
                 if x == index && y == 0 {
                     // highlight of col selected
-                    line = Line::from(
-                        Span::from(header_title)
-                            .style(self.highlight_style)
-                            .bg(Color::Cyan),
-                    );
+                    line = Line::from(Span::from(header_title).style(self.highlight_style));
                 }
             }
             line.render(*rects.get(index).unwrap(), buf);
@@ -113,11 +106,14 @@ impl<'a> CustomTable<'a> {
     }
 
     fn render_rows(&self, area: Rect, buf: &mut Buffer, state: &mut CustomTableState) {
-        let max_item_to_display = (area.height - 3) as usize;
-        let col_size = ((area.width - 1) as usize / MAX_ELEMENT_ROW) as u16;
+        // we need to set max element in col because we don't know
+        // the size of the area otherwise
+        state.max_element_in_col = (area.height - 4) as usize;
+        // avoid calculating constraint directly here
+        let col_size = ((area.width - 2) as usize / state.max_element_in_row) as u16;
 
         for (row_index, result) in self.rows
-            [state.offset_y..state.offset_y + max_item_to_display]
+            [state.offset_y..=state.offset_y + state.max_element_in_col]
             .iter()
             .enumerate()
         {
@@ -133,11 +129,7 @@ impl<'a> CustomTable<'a> {
 
                 if let Some((x, y)) = state.position {
                     if x == col_index && y == row_index + 1 {
-                        line = Line::from(
-                            Span::from(content)
-                                .style(self.highlight_style)
-                                .bg(Color::Cyan),
-                        );
+                        line = Line::from(Span::from(content).style(self.highlight_style));
                     }
                 }
                 line.render(item_rect, buf);
@@ -168,9 +160,7 @@ pub struct CustomTableState {
     pub content_length: usize,
 
     pub max_element_in_row: usize,
-    // we need something like this to ensure we scroll down
-    // but we only get the max element to display through area size
-    //pub max_element_in_col: usize,
+    pub max_element_in_col: usize,
 }
 
 impl CustomTableState {
@@ -187,6 +177,7 @@ impl CustomTableState {
             header_length,
             content_length,
             max_element_in_row,
+            max_element_in_col: 0,
         }
     }
     pub fn content_length(mut self, content_length: usize) -> Self {
@@ -227,7 +218,7 @@ impl CustomTableState {
     }
     pub fn next_row(&mut self) {
         if let Some((x, pos)) = self.position {
-            if pos == 28 {
+            if pos == self.max_element_in_col {
                 if self.offset_y + pos < self.content_length - 1 {
                     self.offset_y = self.offset_y.saturating_add(1);
                 }
@@ -240,10 +231,11 @@ impl CustomTableState {
     }
     pub fn prev_row(&mut self) {
         if let Some((x, pos)) = self.position {
-            if pos == 0 {
+            if pos == 1 && self.offset_y > 0 {
                 self.offset_y = self.offset_y.saturating_sub(1);
+            } else {
+                self.position = Some((x, pos.saturating_sub(1)));
             }
-            self.position = Some((x, pos.saturating_sub(1)));
         } else {
             self.position = Some((0, 0));
         }

@@ -37,7 +37,7 @@ impl<'a> RecordsViewComponent {
         self.header = header;
     }
 
-    pub fn set_body(&mut self, content: Vec<AnyRow>, store: &mut Store) {
+    pub fn set_body(&mut self, content: Vec<AnyRow>) {
         let mut rows: Vec<Vec<String>> = Vec::new();
         for r in content.iter() {
             rows.push(
@@ -114,7 +114,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
         area: Rect,
         selected: bool,
         store: &Store,
-        layout: &LayoutArea,
+        _layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let mut container = Block::default()
             .borders(Borders::ALL)
@@ -126,7 +126,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
         if self.rows.len() > 0 {
             if let Some(total) = self.total {
                 let selected = if let Some((_, y)) = self.table_state.selected() {
-                    y + 1
+                    self.table_state.offset_y + y
                 } else {
                     0
                 };
@@ -142,12 +142,18 @@ impl<'a> MutableComponent for RecordsViewComponent {
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
-            let table = CustomTable::new(&layout)
+            let content_style =
+                Style::default().fg(self.get_color(store.preference.theme_config.unselected_color));
+
+            let table = CustomTable::new()
                 .block(container)
                 .header_block_style(
                     Style::default().fg(self.selected_color(true, store.preference.theme_config)),
                 )
                 .header(self.header.clone())
+                .header_style(content_style)
+                .rows_style(content_style)
+                .highlight_style(content_style.reversed())
                 .rows(self.rows.clone());
 
             frame.render_stateful_widget(table, area, &mut self.table_state);
@@ -155,7 +161,7 @@ impl<'a> MutableComponent for RecordsViewComponent {
             frame.render_stateful_widget(
                 scrollbar_right,
                 area.inner(&Margin {
-                    vertical: 1,
+                    vertical: 2,
                     horizontal: 0,
                 }),
                 &mut self.scrollbar_state_right,
