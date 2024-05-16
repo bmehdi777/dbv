@@ -113,7 +113,7 @@ impl<'a> CustomTable<'a> {
         let col_size = ((area.width - 2) as usize / state.max_element_in_row) as u16;
 
         for (row_index, result) in self.rows
-            [state.offset_y..=state.offset_y + state.max_element_in_col]
+            [state.offset_y..state.offset_y + state.max_element_in_col]
             .iter()
             .enumerate()
         {
@@ -219,7 +219,7 @@ impl CustomTableState {
     pub fn next_row(&mut self) {
         if let Some((x, pos)) = self.position {
             if pos == self.max_element_in_col {
-                if self.offset_y + pos < self.content_length - 1 {
+                if self.offset_y + pos < self.content_length {
                     self.offset_y = self.offset_y.saturating_add(1);
                 }
             } else {
