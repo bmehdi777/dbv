@@ -136,7 +136,7 @@ impl MutableComponent for ConnectionListComponent {
                 Keys::Enter => {
                     store
                         .actions_tx
-                        .send(UpdateAction::SendAppAction(AppAction::SendReset))
+                        .send(UpdateAction::SendAppAction(AppAction::SendResetAll))
                         ?;
                     store.log("Trying to connect to the database...");
                     if let Some(index) = self.list_state.selected() {

@@ -1,6 +1,6 @@
 use super::{centered_rect, MutableComponent};
 use crate::{
-    application::Store,
+    application::{AppAction, Store, UpdateAction},
     components::LayoutArea,
     events::{key::Keys, EventState},
     sql::records::Records,
@@ -58,6 +58,9 @@ impl MutableComponent for TableListComponent {
                     }
                 }
                 Keys::Enter => {
+                    store
+                        .actions_tx
+                        .send(UpdateAction::SendAppAction(AppAction::SendResetRecords))?;
                     if let Some(index) = self.list_state.selected() {
                         let current_db = store.database_list.list[store.database_list.current_database.unwrap()].clone();
                         let current_table = store.tables_list[index].clone();

@@ -19,7 +19,7 @@ pub enum AppAction {
     SendResetDatabaseList,
     SendResetTableList,
     SendResetRecords,
-    SendReset,
+    SendResetAll,
 
     SendRecords((Vec<AnyRow>, Option<i64>)),
 }
@@ -191,16 +191,22 @@ impl<'a> App<'a> {
         match action {
             AppAction::SendResetDatabaseList => {
                 self.database_list = DatabaseListComponent::new();
+                self.table_list = TableListComponent::new();
+                self.records_view = RecordsViewComponent::new();
             }
             AppAction::SendResetTableList => {
                 self.table_list = TableListComponent::new();
+                self.records_view = RecordsViewComponent::new();
             }
-            AppAction::SendResetRecords => {}
-            AppAction::SendReset => {
+            AppAction::SendResetRecords => {
+                self.records_view = RecordsViewComponent::new();
+            }
+            AppAction::SendResetAll => {
                 self.store.reset_database_list();
                 self.store.reset_tables_list();
                 self.database_list = DatabaseListComponent::new();
                 self.table_list = TableListComponent::new();
+                self.records_view = RecordsViewComponent::new();
             }
             AppAction::SendRecords(rows) => {
                 if rows.0.len() > 0 {

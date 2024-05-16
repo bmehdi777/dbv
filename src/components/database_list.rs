@@ -1,9 +1,9 @@
 use super::{centered_rect, HelpContentText, MutableComponent};
 use crate::{
-    application::Store,
+    application::{AppAction, Store, UpdateAction},
+    components::LayoutArea,
     events::{key::Keys, EventState},
-    sql::{tables::Tables, database::Database},
-    components::LayoutArea
+    sql::{database::Database, tables::Tables},
 };
 use std::collections::HashMap;
 
@@ -50,15 +50,19 @@ impl MutableComponent for DatabaseListComponent {
                         };
                         self.list_state.select(Some(index));
                     } else {
-                        self.list_state.select(Some(store.database_list.list.len() - 1));
+                        self.list_state
+                            .select(Some(store.database_list.list.len() - 1));
                     }
                 }
                 Keys::Char('r') => {
-                        let pool = store.user_data.connection_list.get_pool().unwrap();
-                        let actions_tx = store.actions_tx.clone();
-                        Database::get_databases(pool, actions_tx);
+                    let pool = store.user_data.connection_list.get_pool().unwrap();
+                    let actions_tx = store.actions_tx.clone();
+                    Database::get_databases(pool, actions_tx);
                 }
                 Keys::Enter => {
+                    store
+                        .actions_tx
+                        .send(UpdateAction::SendAppAction(AppAction::SendResetTableList))?;
                     if let Some(index) = self.list_state.selected() {
                         store.database_list.current_database = Some(index);
 
@@ -82,7 +86,7 @@ impl MutableComponent for DatabaseListComponent {
         area: ratatui::prelude::Rect,
         selected: bool,
         store: &Store,
-        _layout: &LayoutArea
+        _layout: &LayoutArea,
     ) -> anyhow::Result<()> {
         let container = Block::default()
             .title("Databases")
@@ -99,14 +103,18 @@ impl MutableComponent for DatabaseListComponent {
                 0
             };
 
-            let list = List::new(store.database_list.list.iter().enumerate().map(|(index, item)| {
-                if self.selected == index as isize {
-                    format!(" * {}", item.clone())
-                } else {
-                    item.clone()
-                }
-            }))
-            .style(Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)))
+            let list = List::new(store.database_list.list.iter().enumerate().map(
+                |(index, item)| {
+                    if self.selected == index as isize {
+                        format!(" * {}", item.clone())
+                    } else {
+                        item.clone()
+                    }
+                },
+            ))
+            .style(
+                Style::default().fg(self.get_color(store.preference.theme_config.unselected_color)),
+            )
             .block(container.title_bottom(format!(
                 "{} of {}",
                 selected_idx,
@@ -129,11 +137,8 @@ impl MutableComponent for DatabaseListComponent {
     }
 }
 
-
 impl HelpContentText for DatabaseListComponent {
     fn help_content_text() -> HashMap<&'static str, &'static str> {
-        HashMap::from([
-            ("r", "Reload the database's list"),
-        ])
+        HashMap::from([("r", "Reload the database's list")])
     }
 }
