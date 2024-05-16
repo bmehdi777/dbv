@@ -34,8 +34,8 @@ impl LayoutArea {
             .constraints(vec![
                 Constraint::Length(3),
                 Constraint::Fill(2),
-                Constraint::Fill(1),
                 Constraint::Length(3),
+                Constraint::Fill(1),
             ])
             .split(sub_main_area[1]);
         LayoutArea {

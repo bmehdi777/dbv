@@ -133,17 +133,17 @@ impl<'a> App<'a> {
             &self.store,
             &layout,
         )?;
-        self.log_view.draw(
+        self.command.draw(
             frame,
             layout.right_area[2],
-            select_log_view,
+            select_command,
             &self.store,
             &layout,
         )?;
-        self.command.draw(
+        self.log_view.draw(
             frame,
             layout.right_area[3],
-            select_command,
+            select_log_view,
             &self.store,
             &layout,
         )?;
