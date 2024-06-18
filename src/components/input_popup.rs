@@ -42,6 +42,7 @@ impl InputPopupComponent {
 }
 
 impl MutableComponent for InputPopupComponent {
+    // TODO: it overflows if we go back from one character and remove everything
     fn event(&mut self, input: &Keys, store: &mut Store) -> anyhow::Result<EventState> {
         match input {
             Keys::ArrowLeft => {

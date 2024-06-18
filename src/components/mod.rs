@@ -94,6 +94,8 @@ pub trait MutableComponent {
     }
 }
 
+// Need to be adapted : percent_y may not be convenient for different screen size
+// we may prefer size in pixel for those kinds of things
 pub fn centered_rect(r: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)

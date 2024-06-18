@@ -173,7 +173,7 @@ impl MutableComponent for ConnectionListComponent {
             if selected {
                 popup.draw(
                     frame,
-                    centered_rect(layout.main_area[0], 40, 5),
+                    centered_rect(layout.main_area[0], 40, 7),
                     true,
                     store,
                     layout,
